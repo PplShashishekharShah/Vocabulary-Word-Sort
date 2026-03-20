@@ -1,5 +1,6 @@
 // ─── WordTile Component ───────────────────────────────────────────────────────
-// A single draggable word tile with an upgraded metallic "factory-themed" design.
+// Uses the Wrench asset as the background for words.
+// Enlarged for better visibility.
 
 import { ASSETS } from '../utils/constants'
 
@@ -18,9 +19,6 @@ export default function WordTile({
     onDragStart(e, word)
   }
 
-  // Design tokens for the "good design" upgrade
-  const isSelected = isDragging
-  
   return (
     <div
       onMouseDown={handleMouseDown}
@@ -29,59 +27,43 @@ export default function WordTile({
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
-        cursor: isSelected ? 'grabbing' : 'grab',
+        cursor: isDragging ? 'grabbing' : 'grab',
         userSelect: 'none',
-        zIndex: isSelected ? 9999 : 10,
+        zIndex: isDragging ? 9999 : 10,
         transition: 'transform 0.1s ease',
-        transform: isSelected ? 'scale(1.1) rotate(2deg)' : 'scale(1)',
-        filter: isSelected
-          ? 'drop-shadow(0 15px 30px rgba(0,0,0,0.6)) contrast(1.1)'
-          : 'drop-shadow(0 5px 12px rgba(0,0,0,0.4))',
+        transform: isDragging ? 'scale(1.1)' : 'scale(1)',
+        filter: isDragging
+          ? 'drop-shadow(0 20px 40px rgba(0,0,0,0.6)) contrast(1.1)'
+          : 'drop-shadow(0 8px 15px rgba(0,0,0,0.4))',
         ...style,
       }}
     >
-      {/* ── Outer metallic frame ── */}
+      {/* ── Wrench background ── */}
+      <img
+        src={ASSETS.wrench}
+        alt=""
+        draggable={false}
+        style={{ width: 200, height: 150, objectFit: 'cover' }}
+      />
+
+      {/* ── Word text — sitting on the wrench head/body ── */}
       <div style={{
         position: 'absolute',
-        inset: -2,
-        background: 'linear-gradient(135deg, #bbb 0%, #666 50%, #888 100%)',
-        borderRadius: 12,
-        zIndex: -1,
-        border: '1px solid rgba(255,255,255,0.3)',
-      }} />
-
-      {/* ── Tile body ── */}
-      <div style={{
-        position: 'relative',
-        width: 110,
-        height: 44,
-        background: '#fff',
-        borderRadius: 10,
-        overflow: 'hidden',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        boxShadow: 'inset 0 0 15px rgba(0,0,0,0.05)',
+        top: '54%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: '88%',
+        textAlign: 'center',
       }}>
-        {/* Subtle glass overlay highlight */}
-        <div style={{
-          position: 'absolute',
-          top: 0, left: 0, right: 0, height: '50%',
-          background: 'linear-gradient(to bottom, rgba(255,255,255,0.4), transparent)',
-          pointerEvents: 'none',
-        }} />
-
-        {/* The word text — sharpened with letter spacing and slight shadow */}
         <span style={{
-          position: 'relative',
           fontFamily: "'Segoe UI', Roboto, sans-serif",
-          fontWeight: 800,
+          fontWeight: 900,
           fontSize: word.text.length > 9 ? 12 : 15,
           color: '#1e293b',
-          letterSpacing: 0.6,
+          letterSpacing: 1,
           textTransform: 'uppercase',
           pointerEvents: 'none',
-          textShadow: '0 1px 0 rgba(255,255,255,1)',
+          textShadow: '0 1px 0 rgba(255,255,255,0.8)',
         }}>
           {word.text}
         </span>
@@ -91,9 +73,9 @@ export default function WordTile({
       {isWrong && (
         <div style={{
           position: 'absolute',
-          inset: -4,
-          border: '4px solid #ef4444',
-          borderRadius: 14,
+          inset: 0,
+          border: '5px solid #ef4444',
+          borderRadius: 10,
           animation: 'flash-shake 0.5s ease',
           pointerEvents: 'none',
           zIndex: 20,
@@ -103,10 +85,10 @@ export default function WordTile({
       <style>{`
         @keyframes flash-shake {
           0%, 100% { transform: translateX(0); opacity: 1; }
-          20%       { transform: translateX(-5px); }
-          40%       { transform: translateX(5px); }
-          60%       { transform: translateX(-5px); }
-          80%       { transform: translateX(5px); }
+          20%       { transform: translateX(-6px); }
+          40%       { transform: translateX(6px); }
+          60%       { transform: translateX(-6px); }
+          80%       { transform: translateX(6px); }
         }
       `}</style>
     </div>

@@ -1,6 +1,6 @@
 // ─── ConveyorBelt Component ───────────────────────────────────────────────────
-// Fixed belt layout: Removed shadows as requested, adjusted rail and surface positioning.
-// Surface middle of the side rails.
+// Belt direction corrected to matching word flow (L-to-R).
+// Seamless looping with backgroundSize: 200px.
 
 import { ASSETS } from '../utils/constants'
 import WordTile from './WordTile'
@@ -19,31 +19,25 @@ export default function ConveyorBelt({
     <div style={{
       position: 'relative',
       width: '100%',
-      height: 150,          // Contain the full vertical span of the assembly
+      height: 220,
       overflow: 'visible',
     }}>
-      
-     
-     
-
-      {/* ── Main scrolling belt surface (middle) ── */}
-      {/* Sitting directly between the rails (y=56 to y=104) */}
+      {/* ── Main scrolling belt surface ── */}
       <div style={{
         position: 'absolute',
-        top: 95,
+        top: 167,
         left: 170,
         right: 285,
-        height: 130,
+        height: 150,
         backgroundImage: `url(${ASSETS.conveyorBelt})`,
-        backgroundSize: 'auto 100%',
+        // FIXED: backgroundSize set to 200px to match the 200px scroll distance exactly.
+        backgroundSize: '200px 100%',
         backgroundRepeat: 'repeat-x',
         backgroundPosition: '0 0',
-        animation: isPaused ? 'none' : 'belt-scroll-reverse 2.2s linear infinite',
+        // Speed matched to code logic: 200px in 2.2s.
+        animation: isPaused ? 'none' : 'belt-scroll-right 2.2s linear infinite',
         zIndex: 5,
-        // inset shadows removed as requested
       }} />
-
-     
 
       {/* ── Word tiles — sitting inside the belt surface ── */}
       <div style={{ position: 'relative', zIndex: 15, height: '100%' }}>
@@ -63,12 +57,11 @@ export default function ConveyorBelt({
               isWrong={wrongWords.has(id)}
               style={{
                 position: 'absolute',
-                left: pos?.x ?? 170, // Default to start of belt
-                // Center vertically in the 104px belt area (56 + 52)
-                top: 125,
+                left: pos?.x ?? 170,
+                top: 190,
                 transform: 'translateY(-50%)',
-                opacity: (sortedWords[id] || (pos?.x > window.innerWidth - 300)) ? 0 : 1,
-                transition: sortedWords[id] ? 'opacity 0.3s ease' : 'none',
+                opacity: (isDraggingThis || sortedWords[id]) ? 0 : 1,
+                visibility: (isDraggingThis || sortedWords[id]) ? 'hidden' : 'visible',
               }}
             />
           )
@@ -76,9 +69,9 @@ export default function ConveyorBelt({
       </div>
 
       <style>{`
-        @keyframes belt-scroll-reverse {
+        @keyframes belt-scroll-right {
           from { background-position: 0 0; }
-          to   { background-position: -200px 0; }
+          to   { background-position: 200px 0; }
         }
       `}</style>
     </div>

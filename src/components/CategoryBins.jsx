@@ -1,14 +1,13 @@
 // ─── CategoryBins Component ───────────────────────────────────────────────────
-// Center-aligned labels over bins with minimal gaps.
-// Sprites: 0=Yellow, 1=Red, 2=Blue (based on user visuals).
+// Center-aligned labels over bins with perfect offset.
 
 import { useRef, useEffect } from 'react'
 import { ASSETS } from '../utils/constants'
 
 // User's perfected horizontal positions (Left% edge)
 const BIN_POSITIONS = [
-  { left: '22%' },   // cat_1 – Positive (Yellow)
-  { left: '45%' },   // cat_2 – Sad (Red)
+  { left: '20%' },   // cat_1 – Positive (Yellow)
+  { left: '44%' },   // cat_2 – Sad (Red)
   { left: '68%' },   // cat_3 – Angry (Blue)
 ]
 
@@ -24,7 +23,7 @@ export default function CategoryBins({
     <div style={{
       position: 'absolute',
       left: 0, right: 0,
-      bottom: -15,          // Adjusted for floor alignment
+      bottom: -15, 
       height: 280,
       zIndex: 15,
       pointerEvents: 'none',
@@ -67,7 +66,7 @@ function BinItem({ category, index, sortedCount, isGlowing, isShaking, binsRef }
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',       // Center everything horizontally
+        alignItems: 'center',
         justifyContent: 'flex-end',
         animation: isShaking ? 'shake 0.4s ease' : 'none',
         zIndex: 10,
@@ -78,23 +77,25 @@ function BinItem({ category, index, sortedCount, isGlowing, isShaking, binsRef }
     >
       {/* ── Focused Label Strip ── */}
       <div style={{
-        background: 'rgba(0,0,0,0.9)',
+        background: 'rgba(0,0,0,1)', // Solid black
         border: `2px solid ${category.color}`,
         borderRadius: 8,
-        padding: '4px 12px',
-        marginBottom: -12,          // Overlap bin clip slightly for tight look
+        padding: '6px 15px',
+        marginBottom: -12, // Move it closer to the bin
+        position: 'relative',
+        top: -5, // Lowering the label as requested
         textAlign: 'center',
         boxShadow: isGlowing
           ? `0 0 25px ${category.glow}`
           : '0 4px 12px rgba(0,0,0,0.7)',
-        width: 175,
+        width: 155,
         boxSizing: 'border-box',
         zIndex: 20,
       }}>
         <div style={{
           fontFamily: "'Georgia', serif",
           fontWeight: 900,
-          fontSize: 9.5,
+          fontSize: 10,
           color: category.color,
           textTransform: 'uppercase',
           letterSpacing: 1.2,

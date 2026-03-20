@@ -1,8 +1,9 @@
 // ─── GameContainer Component ───────────────────────────────────────────────────
-// Implementation: Word re-spawning and level-completion animation.
-// Words correctly wrap-around if missed and teleport back on incorrect drops.
+// Queue-based spawning for retries and visual fixes.
+// Belt and words now move L-to-R in perfect sync.
+// Action-driven Robot Feedback integrated.
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 
 import questionsData    from '../data/questions.json'
 import { sounds }       from '../utils/sounds'
@@ -16,10 +17,13 @@ import CompletionScreen from './CompletionScreen'
 import RobotGuide       from './RobotGuide'
 
 const QUESTION   = questionsData.questions[0]
-const ALL_WORDS  = QUESTION.words
 const CATEGORIES = QUESTION.categories
 const ANSWERS    = QUESTION.correct_answer
-const BELT_SPEED = 1.15
+
+// SYNC: Code-driven move exactly matching CSS 2.2s/200px (L-to-R)
+// 200px / (2.2s * 60fps) = 1.5151515
+const BELT_SPEED = 1.5151515
+const SPAWN_DISTANCE_THRESHOLD = 400 
 
 // ─── Particle Burst ───────────────────────────────────────────────────────────
 function ParticleBurst({ x, y, color, onDone, count = 15 }) {
@@ -41,33 +45,32 @@ function ParticleBurst({ x, y, color, onDone, count = 15 }) {
   )
 }
 
-// ─── Drag Ghost (Matching WordTile Design) ──────────────────────────────────────
+// ─── Drag Ghost (Downsized Wrench) ──────────────────────────────────────────────
 function DragGhost({ dragging }) {
   if (!dragging) return null
   return (
     <div style={{
       position: 'fixed',
-      left:  dragging.x - (dragging.offsetX || 55),
-      top:   dragging.y - (dragging.offsetY || 22),
-      pointerEvents: 'none', zIndex: 9998,
+      left:  dragging.x - (dragging.offsetX || 105),
+      top:   dragging.y - (dragging.offsetY || 60),
+      pointerEvents: 'none', zIndex: 10001,
       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-      transform: 'scale(1.1) rotate(3deg)', filter: 'drop-shadow(0 15px 30px rgba(0,0,0,0.6))',
+      transform: 'rotate(12deg)', 
+      filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.65))',
     }}>
-      <div style={{
-        position: 'absolute', inset: -2, background: 'linear-gradient(135deg, #bbb, #666, #888)',
-        borderRadius: 12, zIndex: -1, border: '1px solid rgba(255,255,255,0.3)',
-      }} />
-      <div style={{ position: 'relative', width: 110, height: 44, background: '#fff', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ fontFamily: "'Segoe UI', sans-serif", fontWeight: 800, fontSize: 14, color: '#1e293b', textTransform: 'uppercase' }}>
-          {dragging.word.text}
-        </span>
-      </div>
+      <img src={ASSETS.wrench} alt="" style={{ width: 210, height: 120, objectFit: 'cover' }} />
+      <span style={{
+        position: 'absolute', top: '54%', left: '50%', transform: 'translate(-50%, -50%)',
+        fontFamily: "'Segoe UI', sans-serif", fontWeight: 900, fontSize: 13,
+        color: '#1e293b', textTransform: 'uppercase', letterSpacing: 1.2,
+      }}>{dragging.word.text}</span>
     </div>
   )
 }
 
-// ─── Main Game Component ────────────────────────────────────────────────────────
 export default function GameContainer() {
+  const INITIAL_QUEUE = useMemo(() => [...QUESTION.words].sort(() => Math.random() - 0.5), [])
+
   const [sortedWords, setSortedWords] = useState({})
   const [wrongWords,  setWrongWords]  = useState(new Set())
   const [glowingBin,  setGlowingBin] = useState(null)
@@ -79,9 +82,12 @@ export default function GameContainer() {
   const [isPaused,    setIsPaused]   = useState(false)
   const [flashType,   setFlashType]  = useState(null) 
   const [isCelebrating, setIsCelebrating] = useState(false)
+  const [robotFeedback, setRobotFeedback] = useState('')
 
-  const [beltWords,     setBeltWords]     = useState([])
-  const [spawnIndex,    setSpawnIndex]    = useState(0)
+  // Queue Management
+  const [spawnQueue,   setSpawnQueue]   = useState(INITIAL_QUEUE.map(w => w.id))
+  const [retryQueue,   setRetryQueue]   = useState([])
+  const [beltWords,    setBeltWords]    = useState([])
   const [wordPositions, setWordPositions] = useState({})
 
   const [dragging, setDragging] = useState(null)
@@ -91,47 +97,66 @@ export default function GameContainer() {
 
   useEffect(() => { isPausedRef.current = isPaused }, [isPaused])
 
-  // Spawning Words
-  useEffect(() => {
-    if (spawnIndex >= ALL_WORDS.length || isPaused) return
-    const t = setTimeout(() => {
-      const id = ALL_WORDS[spawnIndex].id
-      setBeltWords(p => [...p, id])
-      setWordPositions(p => ({ ...p, [id]: { x: 170 } }))
-      setSpawnIndex(i => i + 1)
-    }, spawnIndex === 0 ? 500 : 2800)
-    return () => clearTimeout(t)
-  }, [spawnIndex, isPaused])
-
-  // Belt Motion & Missed Word Wrap-around Logic
+  // Move existing words and check for wrap-around
   useEffect(() => {
     const interval = setInterval(() => {
       if (isPausedRef.current || isCelebrating) return
+
       setWordPositions(prev => {
         const next = { ...prev }
+        let furthestSpawnedX = 0
+
+        // 1. Move existing words
         Object.keys(next).forEach(id => {
           if (!sortedWords[id]) {
             let nextX = (next[id]?.x ?? 170) + BELT_SPEED
-            // RE-SPAWN MISSED WORDS: If word passes the bins (approx x=innerWidth-300)
-            if (nextX > window.innerWidth - 200) {
-              nextX = 170
+            
+            // MISS HANDLE: If word passes the right edge
+            if (nextX > window.innerWidth - 100) {
+              setRetryQueue(q => q.includes(id) ? q : [...q, id])
+              delete next[id]
+              setBeltWords(bw => bw.filter(bid => bid !== id))
+              return
             }
             next[id] = { x: nextX }
+            if (nextX > furthestSpawnedX) furthestSpawnedX = nextX
           }
         })
+
+        // 2. Logic-based spawning: Only spawn if gap is clear
+        const activeWordsOnBelt = Object.keys(next).filter(id => !sortedWords[id])
+        const minX = activeWordsOnBelt.length > 0 
+          ? Math.min(...activeWordsOnBelt.map(id => next[id].x))
+          : 9999
+
+        if (minX > 170 + SPAWN_DISTANCE_THRESHOLD) {
+          if (spawnQueue.length > 0) {
+            const nextId = spawnQueue[0]
+            setSpawnQueue(q => q.slice(1))
+            setBeltWords(bw => [...bw, nextId])
+            next[nextId] = { x: 170 }
+          } else if (activeWordsOnBelt.length === 0 && retryQueue.length > 0) {
+            const nextId = retryQueue[0]
+            setRetryQueue(q => q.slice(1))
+            setBeltWords(bw => [...bw, nextId])
+            next[nextId] = { x: 170 }
+          }
+        }
+
         return next
       })
     }, 16)
     return () => clearInterval(interval)
-  }, [sortedWords, isCelebrating])
+  }, [sortedWords, isCelebrating, spawnQueue, retryQueue])
 
   const handleDragStart = useCallback((e, word) => {
-    if (isPausedRef.current) return
+    if (isPausedRef.current || isCelebrating) return
     const rect = e.currentTarget.getBoundingClientRect()
     setDragging({ word, offsetX: e.clientX - rect.left, offsetY: e.clientY - rect.top, x: e.clientX, y: e.clientY })
     dragRef.current = word
+    setRobotFeedback('') // Clear before drop
     sounds.drag()
-  }, [])
+  }, [isCelebrating])
 
   useEffect(() => {
     if (!dragging) return
@@ -148,24 +173,20 @@ export default function GameContainer() {
 
       if (droppedCatId) {
         if (ANSWERS[word.id] === droppedCatId) {
-          sounds.correct(); 
-          setSortedWords(p => ({ ...p, [word.id]: droppedCatId })); 
-          setScore(s => s + 1); 
-          setGlowingBin(droppedCatId)
-          setFlashType('correct'); 
+          sounds.correct(); setSortedWords(p => ({ ...p, [word.id]: droppedCatId })); setScore(s => s + 1); setGlowingBin(droppedCatId)
+          setFlashType('correct')
+          setRobotFeedback("Great job! That's correct! 🔧")
           setTimeout(() => setFlashType(null), 800)
           setParticles(p => [...p, { id: Date.now(), x: e.clientX, y: e.clientY, color: CATEGORIES.find(c => c.id === droppedCatId).color }])
-          setTimeout(() => setGlowingBin(null), 900)
         } else {
-          sounds.wrong(); 
-          setIncorrect(i => i + 1); 
-          setWrongWords(p => new Set([...p, word.id])); 
-          setShakingBin(droppedCatId)
-          setFlashType('wrong'); 
-          setTimeout(() => {
-             setFlashType(null)
-             // RE-SPAWN INCORRECT WORDS: Start back on belt after flash
-             setWordPositions(p => ({ ...p, [word.id]: { x: 170 }}))
+          sounds.wrong(); setIncorrect(i => i + 1); setWrongWords(p => new Set([...p, word.id])); setShakingBin(droppedCatId)
+          setFlashType('wrong')
+          setRobotFeedback("Oops! Wrong bin! Try again! 🔧")
+          setTimeout(() => { 
+            setFlashType(null)
+            setRetryQueue(q => q.includes(word.id) ? q : [...q, word.id])
+            setWordPositions(p => { const next = {...p}; delete next[word.id]; return next })
+            setBeltWords(bw => bw.filter(bid => bid !== word.id))
           }, 800)
           setTimeout(() => { setWrongWords(p => { const n = new Set(p); n.delete(word.id); return n }); setShakingBin(null) }, 600)
         }
@@ -174,34 +195,22 @@ export default function GameContainer() {
     }
     window.addEventListener('mousemove', onMove); window.addEventListener('mouseup', onUp)
     return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
-  }, [dragging])
+  }, [dragging, CATEGORIES])
 
-  // Completion Check
   useEffect(() => {
-    if (Object.keys(sortedWords).length === ALL_WORDS.length && ALL_WORDS.length > 0) {
-      setIsCelebrating(true)
-      // Multi-firework effect
+    if (Object.keys(sortedWords).length === QUESTION.words.length && QUESTION.words.length > 0) {
+      setIsCelebrating(true); 
+      setRobotFeedback("MISSION COMPLETE! You're a pro! 🏆")
       const colors = ['#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#a855f7']
-      const interval = setInterval(() => {
-        setParticles(p => [...p, {
-          id: Math.random(),
-          x: Math.random() * window.innerWidth,
-          y: Math.random() * (window.innerHeight / 2),
-          color: colors[Math.floor(Math.random() * colors.length)],
-          count: 25
-        }])
-      }, 400)
-      
-      setTimeout(() => {
-        clearInterval(interval)
-        setGameOver(true)
-      }, 4000)
+      const int = setInterval(() => { setParticles(p => [...p, { id: Math.random(), x: Math.random() * window.innerWidth, y: Math.random() * (window.innerHeight / 2), color: colors[Math.floor(Math.random() * colors.length)], count: 25 }]) }, 400)
+      setTimeout(() => { clearInterval(int); setGameOver(true) }, 4000)
     }
   }, [sortedWords])
 
-  const restart = () => {
+  const restart = () => { 
     setSortedWords({}); setWrongWords(new Set()); setGlowingBin(null); setShakingBin(null); setParticles([]); setScore(0); setIncorrect(0)
-    setGameOver(false); setIsPaused(false); setIsCelebrating(false); setBeltWords([]); setSpawnIndex(0); setWordPositions({})
+    setGameOver(false); setIsPaused(false); setIsCelebrating(false); setRobotFeedback("Welcome back! Let's sort! 🏭")
+    setSpawnQueue(INITIAL_QUEUE.map(w => w.id)); setRetryQueue([]); setBeltWords([]); setWordPositions({})
   }
 
   return (
@@ -210,14 +219,10 @@ export default function GameContainer() {
       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.1) 45%, rgba(0,0,0,0.8) 100%)', zIndex: 1 }} />
       <EffectsLayer />
 
-      {/* FEEDBACK FLASH */}
-      {flashType && <div style={{ position: 'absolute', inset: 0, zIndex: 5000, background: flashType === 'correct' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)', boxShadow: flashType === 'correct' ? 'inset 0 0 100px rgba(34,197,94,0.4)' : 'inset 0 0 100px rgba(239,68,68,0.4)', animation: 'fade-out-feedback 0.8s ease forwards', pointerEvents: 'none' }} />}
-
-      {/* STAGE CLEAR BANNER */}
       {isCelebrating && (
         <div style={{ position: 'absolute', top: '35%', left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 6000, pointerEvents: 'none' }}>
-          <div style={{ background: 'rgba(0,0,0,0.9)', border: '6px solid #f59e0b', borderRadius: 40, padding: '30px 100px', transform: 'scale(1)', animation: 'banner-pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards' }}>
-            <h2 style={{ color: '#f59e0b', fontSize: 60, margin: 0, letterSpacing: 8, fontWeight: 900, textShadow: '0 0 20px #f59e0b' }}>STAGE CLEAR!</h2>
+          <div style={{ background: 'rgba(0,0,0,0.92)', border: '6px solid #f59e0b', borderRadius: 40, padding: '30px 100px', animation: 'banner-pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards' }}>
+            <h2 style={{ color: '#f59e0b', fontSize: 60, margin: 0, letterSpacing: 8, fontWeight: 900 }}>STAGE CLEAR!</h2>
             <p style={{ color: '#fff', textAlign: 'center', fontSize: 20, margin: '10px 0 0 0', fontWeight: 600 }}>EXCELLENT SORTING!</p>
           </div>
         </div>
@@ -226,45 +231,48 @@ export default function GameContainer() {
       {/* HUD */}
       <div style={{ position: 'absolute', top: 15, left: 15, right: 15, display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 1000, gap: 15 }}>
         <div style={{ background: '#000', borderRadius: 12, padding: '12px 28px', border: '2px solid #f59e0b', color: '#f59e0b', fontWeight: 900, fontSize: 18 }}>🏭 WORD FACTORY</div>
-        <div style={{ flex: 1 }}><ProgressBar sorted={Object.keys(sortedWords).length} total={ALL_WORDS.length} score={score} incorrect={incorrect} /></div>
+        <div style={{ flex: 1 }}><ProgressBar sorted={Object.keys(sortedWords).length} total={QUESTION.words.length} score={score} incorrect={incorrect} /></div>
         <button onClick={() => setIsPaused(!isPaused)} style={{ background: isPaused ? '#10b981' : '#111', border: '2px solid #f59e0b', borderRadius: 12, color: '#f59e0b', padding: '10px 24px', fontWeight: 900, cursor: 'pointer' }}>{isPaused ? '▶ RESUME' : '⏸ PAUSE'}</button>
       </div>
 
+      {/* QUESTION BOX - TWO LINES */}
       <div style={{ position: 'absolute', top: 95, left: 0, right: 0, textAlign: 'center', zIndex: 100 }}>
-        <div style={{ display: 'inline-block', background: 'rgba(0,0,0,0.7)', borderRadius: 10, padding: '10px 35px', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', fontStyle: 'italic', fontSize: 13, backdropFilter: 'blur(10px)' }}>{QUESTION.question_text}</div>
+        <div style={{ 
+          display: 'inline-flex', 
+          justifyContent: 'center',
+          background: '#000', 
+          borderRadius: 12, 
+          padding: '12px 25px', 
+          border: '1px solid rgba(255,158,11,0.5)', 
+          color: '#fff', 
+          fontSize: 14, 
+          fontWeight: 600,
+          fontStyle: 'italic',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.8)',
+          maxWidth: '500px',
+          lineHeight: '1.4',
+          textAlign: 'center',
+        }}>
+          {QUESTION.question_text}
+        </div>
       </div>
 
       <div style={{ position: 'absolute', left: 0, right: 0, bottom: 270, zIndex: 50 }}>
-        <ConveyorBelt beltWords={beltWords} allWords={ALL_WORDS} wordPositions={wordPositions} sortedWords={sortedWords} wrongWords={wrongWords} dragging={dragging} onDragStart={handleDragStart} isPaused={isPaused} />
+        <ConveyorBelt beltWords={beltWords} allWords={QUESTION.words} wordPositions={wordPositions} sortedWords={sortedWords} wrongWords={wrongWords} dragging={dragging} onDragStart={handleDragStart} isPaused={isPaused} />
       </div>
 
       <CategoryBins categories={CATEGORIES} binCounts={Object.values(sortedWords).reduce((acc, cat) => ({...acc, [cat]: (acc[cat] || 0) + 1}), {})} glowingBin={glowingBin} shakingBin={shakingBin} dragging={dragging} binsRef={binsRef} />
       
-      <div style={{ zIndex: 40, position: 'absolute', left: 0, bottom: 0 }}>
-        <RobotGuide isPaused={isPaused} />
+      <div style={{ zIndex: 10000, position: 'absolute', right: -30, top: '45%', transform: 'translateY(-50%)' }}>
+        <RobotGuide isPaused={isPaused} externalMessage={robotFeedback} />
       </div>
 
       <DragGhost dragging={dragging} />
       {particles.map(p => <ParticleBurst key={p.id} x={p.x} y={p.y} color={p.color} count={p.count} onDone={() => setParticles(pr => pr.filter(x => x.id !== p.id))} />)}
       
-      {isPaused && !gameOver && !isCelebrating && (
-        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', backdropFilter: 'blur(3px)' }}>
-          <div style={{ background: 'rgba(0,0,0,0.9)', border: '4px solid #f59e0b', borderRadius: 40, padding: '25px 80px', animation: 'blink 1.2s infinite' }}>
-            <h1 style={{ color: '#f59e0b', fontSize: 40, margin: 0, letterSpacing: 6 }}>PAUSED</h1>
-          </div>
-        </div>
-      )}
-
-      {gameOver && <CompletionScreen score={score} incorrect={incorrect} total={ALL_WORDS.length} onRestart={restart} />}
-      
       <style>{`
-        @keyframes container-vibrate {
-          0%, 100% { transform: translate(0,0); }
-          10%, 30%, 50%, 70%, 90% { transform: translate(-4px, 0); }
-          20%, 40%, 60%, 80% { transform: translate(4px, 0); }
-        }
+        @keyframes container-vibrate { 0%, 100% { transform: translate(0,0); } 10%, 30%, 50%, 70%, 90% { transform: translate(-4px, 0); } 20%, 40%, 60%, 80% { transform: translate(4px, 0); } }
         @keyframes fade-out-feedback { from { opacity: 1; } to { opacity: 0; } }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
         @keyframes banner-pop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
       `}</style>
     </div>
