@@ -1,6 +1,6 @@
 // ─── GameContainer Component ───────────────────────────────────────────────────
-// Continuous retry spawning and action-driven robot feedback.
-// Perfected sync and visual fade at edge.
+// Synchronized BELT_LIMIT and enabled pass-through pointer events for RobotGuide.
+// Perfected pickability for wrenches at the factory end.
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 
@@ -102,8 +102,8 @@ export default function GameContainer() {
       setWordPositions(prev => {
         const next = { ...prev }
         
-        // Final belt limit (visible end)
-        const BELT_LIMIT = window.innerWidth - 300 
+        
+        const BELT_LIMIT = window.innerWidth - 250 
 
         Object.keys(next).forEach(id => {
           if (!sortedWords[id]) {
@@ -133,7 +133,6 @@ export default function GameContainer() {
             setBeltWords(bw => [...bw, nextId])
             next[nextId] = { x: 170 }
           } else if (retryQueue.length > 0) {
-            // FIXED: Continuous retry spawning – multiple retries can now occupy the belt
             const nextId = retryQueue[0]
             setRetryQueue(q => q.slice(1))
             setBeltWords(bw => [...bw, nextId])
@@ -248,9 +247,10 @@ export default function GameContainer() {
         <ConveyorBelt beltWords={beltWords} allWords={QUESTION.words} wordPositions={wordPositions} sortedWords={sortedWords} wrongWords={wrongWords} dragging={dragging} onDragStart={handleDragStart} isPaused={isPaused} />
       </div>
 
-      <CategoryBins categories={CATEGORIES} binCounts={Object.values(sortedWords).reduce((acc, cat) => ({...acc, [cat]: (acc[cat] || 0) + 1}), {})} glowingBin={glowingBin} shakingBin={shakingBin} dragging={dragging} binsRef={binsRef} />
+      <CategoryBins categories={CATEGORIES} binCounts={Object.values(sortedWords).reduce((acc, cat) => ({...acc, [acc[cat]]: (acc[acc[cat]] || 0) + 1}), {})} glowingBin={glowingBin} shakingBin={shakingBin} dragging={dragging} binsRef={binsRef} />
       
-      <div style={{ zIndex: 10000, position: 'absolute', right: -30, top: '45%', transform: 'translateY(-50%)' }}>
+      {/* FIXED: Added pointerEvents: none to wrapper so it doesn't block the belt clicks */}
+      <div style={{ zIndex: 10000, position: 'absolute', right: -30, top: '45%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
         <RobotGuide isPaused={isPaused} externalMessage={robotFeedback} />
       </div>
 

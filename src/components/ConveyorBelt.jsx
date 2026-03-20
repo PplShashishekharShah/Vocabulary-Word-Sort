@@ -1,6 +1,6 @@
 // ─── ConveyorBelt Component ───────────────────────────────────────────────────
 // Belt direction corrected to matching word flow (L-to-R).
-// Added smooth edge-fading as wrenches approach the belt end.
+// Synced BELT_LIMIT for better pickability range.
 
 import { ASSETS } from '../utils/constants'
 import WordTile from './WordTile'
@@ -15,8 +15,8 @@ export default function ConveyorBelt({
   onDragStart,
   isPaused,
 }) {
-  // Sync the limit with GameContainer logic
-  const BELT_LIMIT = window.innerWidth -220
+ 
+  const BELT_LIMIT = window.innerWidth - 250 
   const FADE_START = BELT_LIMIT - 100
 
   return (
@@ -49,7 +49,6 @@ export default function ConveyorBelt({
           const pos = wordPositions[id]
           const isDraggingThis = dragging?.word?.id === id
           
-          // FADE LOGIC: Calculate opacity based on x-position
           const currentX = pos?.x ?? 170
           let opacity = 1
           if (currentX > FADE_START) {
@@ -69,10 +68,9 @@ export default function ConveyorBelt({
                 left: currentX,
                 top: 190,
                 transform: 'translateY(-50%)',
-                // Combined visibilty logic with the new edge-fade
                 opacity: (isDraggingThis || sortedWords[id]) ? 0 : opacity,
                 visibility: (isDraggingThis || sortedWords[id] || opacity <= 0) ? 'hidden' : 'visible',
-                transition: 'opacity 0.1s linear', // Smooth transition for position updates
+                transition: 'opacity 0.1s linear',
               }}
             />
           )
