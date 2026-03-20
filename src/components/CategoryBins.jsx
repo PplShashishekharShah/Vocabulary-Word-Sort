@@ -93,7 +93,7 @@ function BinItem({ category, index, sortedCount, isGlowing, isShaking, binsRef }
         zIndex: 20,
       }}>
         <div style={{
-          fontFamily: "'Georgia', serif",
+          fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
           fontWeight: 900,
           fontSize: 10,
           color: category.color,

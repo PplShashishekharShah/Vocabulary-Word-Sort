@@ -60,7 +60,7 @@ function DragGhost({ dragging }) {
       <img src={ASSETS.wrench} alt="" style={{ width: 200, height: 120, objectFit: 'cover' }} />
       <span style={{
         position: 'absolute', top: '54%', left: '50%', transform: 'translate(-50%, -50%)',
-        fontFamily: "'Segoe UI', sans-serif", fontWeight: 900, fontSize: 13,
+        fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif", fontWeight: 900, fontSize: 13,
         color: '#1e293b', textTransform: 'uppercase', letterSpacing: 1.2,
       }}>{dragging.word.text}</span>
     </div>

@@ -43,7 +43,7 @@ export default function CompletionScreen({ score, incorrect, total, onRestart })
 
         {/* Title */}
         <h1 style={{
-          fontFamily: "'Georgia', serif",
+          fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
           fontSize: 38,
           color: '#f59e0b',
           marginBottom: 10,
@@ -55,7 +55,7 @@ export default function CompletionScreen({ score, incorrect, total, onRestart })
         {/* Sub-title */}
         <p style={{
           color: 'rgba(255,255,255,0.65)',
-          fontFamily: "'Georgia', serif",
+          fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
           fontSize: 16,
           marginBottom: 36,
         }}>
@@ -74,7 +74,7 @@ export default function CompletionScreen({ score, incorrect, total, onRestart })
               <div style={{ fontSize: 30 }}>{s.emoji}</div>
               <div style={{
                 color: s.color,
-                fontFamily: "'Georgia', serif",
+                fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
                 fontWeight: 700,
                 fontSize: 30,
                 marginTop: 4,
@@ -102,7 +102,7 @@ export default function CompletionScreen({ score, incorrect, total, onRestart })
             borderRadius: 14,
             padding: '15px 44px',
             color: '#1a1a2e',
-            fontFamily: "'Georgia', serif",
+            fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
             fontWeight: 700,
             fontSize: 19,
             cursor: 'pointer',

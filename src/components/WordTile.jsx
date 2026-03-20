@@ -56,7 +56,7 @@ export default function WordTile({
         textAlign: 'center',
       }}>
         <span style={{
-          fontFamily: "'Segoe UI', Roboto, sans-serif",
+          fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
           fontWeight: 900,
           fontSize: word.text.length > 9 ? 12 : 15,
           color: '#1e293b',

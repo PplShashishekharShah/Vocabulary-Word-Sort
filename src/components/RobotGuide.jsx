@@ -49,7 +49,7 @@ export default function RobotGuide({ isPaused, externalMessage }) {
           top: '18%', left: '20%', right: '20%', bottom: '30%', 
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           textAlign: 'center',
-          fontFamily: "'Georgia', serif",
+          fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
           fontWeight: 900,
           fontSize: 15, 
           lineHeight: 1.2,

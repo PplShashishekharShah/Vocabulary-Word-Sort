@@ -19,7 +19,7 @@ export default function ProgressBar({ sorted, total, score, incorrect }) {
       {/* Word count */}
       <div style={{
         color: '#f59e0b',
-        fontFamily: "'Georgia', serif",
+        fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
         fontWeight: 700,
         fontSize: 14,
         whiteSpace: 'nowrap',
@@ -51,7 +51,7 @@ export default function ProgressBar({ sorted, total, score, incorrect }) {
       {/* Correct count */}
       <div style={{
         color: '#10b981',
-        fontFamily: 'monospace',
+        fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
         fontWeight: 700,
         fontSize: 13,
       }}>
@@ -62,7 +62,7 @@ export default function ProgressBar({ sorted, total, score, incorrect }) {
       {incorrect > 0 && (
         <div style={{
           color: '#ef4444',
-          fontFamily: 'monospace',
+          fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
           fontWeight: 700,
           fontSize: 13,
         }}>
