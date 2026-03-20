@@ -1,0 +1,40 @@
+{
+  "questions": [
+    {
+      "question_text": "Sort the following words into categories based on the type of emotion they describe.",
+      "words": [
+        { "id": "word_1",  "text": "joyful" },
+        { "id": "word_2",  "text": "gloomy" },
+        { "id": "word_3",  "text": "furious" },
+        { "id": "word_4",  "text": "cheerful" },
+        { "id": "word_5",  "text": "sorrowful" },
+        { "id": "word_6",  "text": "irritated" },
+        { "id": "word_7",  "text": "delighted" },
+        { "id": "word_8",  "text": "unhappy" },
+        { "id": "word_9",  "text": "annoyed" },
+        { "id": "word_10", "text": "glad" },
+        { "id": "word_11", "text": "disappointed" },
+        { "id": "word_12", "text": "frustrated" }
+      ],
+      "categories": [
+        { "id": "cat_1", "label": "Positive Feelings",             "color": "#f59e0b", "glow": "rgba(245,158,11,0.6)",  "emoji": "" },
+        { "id": "cat_2", "label": "Sad or Disappointed Feelings",  "color": "#3b82f6", "glow": "rgba(59,130,246,0.6)", "emoji": "" },
+        { "id": "cat_3", "label": "Angry or Frustrated Feelings",  "color": "#ef4444", "glow": "rgba(239,68,68,0.6)",  "emoji": "" }
+      ],
+      "correct_answer": {
+        "word_1":  "cat_1",
+        "word_2":  "cat_2",
+        "word_3":  "cat_3",
+        "word_4":  "cat_1",
+        "word_5":  "cat_2",
+        "word_6":  "cat_3",
+        "word_7":  "cat_1",
+        "word_8":  "cat_2",
+        "word_9":  "cat_3",
+        "word_10": "cat_1",
+        "word_11": "cat_2",
+        "word_12": "cat_3"
+      }
+    }
+  ]
+}
