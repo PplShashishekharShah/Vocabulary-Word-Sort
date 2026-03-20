@@ -1,6 +1,6 @@
 // ─── GameContainer Component ───────────────────────────────────────────────────
-// Added visual feedback (green/red flash) on correct/incorrect drops.
-// Words correctly spawn from the belt's left edge (x=170).
+// Implementation: Word re-spawning and level-completion animation.
+// Words correctly wrap-around if missed and teleport back on incorrect drops.
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 
@@ -19,21 +19,21 @@ const QUESTION   = questionsData.questions[0]
 const ALL_WORDS  = QUESTION.words
 const CATEGORIES = QUESTION.categories
 const ANSWERS    = QUESTION.correct_answer
-const BELT_SPEED = 1.1
+const BELT_SPEED = 1.15
 
 // ─── Particle Burst ───────────────────────────────────────────────────────────
-function ParticleBurst({ x, y, color, onDone }) {
-  const particles = Array.from({ length: 15 }, (_, i) => ({
-    id: i, angle: (i / 15) * Math.PI * 2, dist: 45 + Math.random() * 55, size: 5 + Math.random() * 7,
+function ParticleBurst({ x, y, color, onDone, count = 15 }) {
+  const particles = Array.from({ length: count }, (_, i) => ({
+    id: i, angle: (i / count) * Math.PI * 2, dist: 50 + Math.random() * 70, size: 6 + Math.random() * 8,
   }))
-  useEffect(() => { const t = setTimeout(onDone, 800); return () => clearTimeout(t) }, [onDone])
+  useEffect(() => { const t = setTimeout(onDone, 1200); return () => clearTimeout(t) }, [onDone])
   return (
     <div style={{ position: 'fixed', left: x, top: y, pointerEvents: 'none', zIndex: 9999 }}>
       {particles.map(p => (
         <div key={p.id} style={{
           position: 'absolute', width: p.size, height: p.size, borderRadius: '50%', background: color,
-          boxShadow: `0 0 8px ${color}`, transform: 'translate(-50%,-50%)',
-          animation: 'particle-fly 0.8s ease-out forwards',
+          boxShadow: `0 0 10px ${color}`, transform: 'translate(-50%,-50%)',
+          animation: 'particle-fly 1.2s ease-out forwards',
           '--dx': `${Math.cos(p.angle) * p.dist}px`, '--dy': `${Math.sin(p.angle) * p.dist}px`,
         }} />
       ))}
@@ -41,29 +41,24 @@ function ParticleBurst({ x, y, color, onDone }) {
   )
 }
 
-// ─── Drag Ghost (Matching New Design) ──────────────────────────────────────────
+// ─── Drag Ghost (Matching WordTile Design) ──────────────────────────────────────
 function DragGhost({ dragging }) {
   if (!dragging) return null
   return (
     <div style={{
       position: 'fixed',
-      left:  dragging.x - (dragging.offsetX || 61),
-      top:   dragging.y - (dragging.offsetY || 29),
+      left:  dragging.x - (dragging.offsetX || 55),
+      top:   dragging.y - (dragging.offsetY || 22),
       pointerEvents: 'none', zIndex: 9998,
       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-      transform: 'scale(1.15) rotate(4deg)', filter: 'drop-shadow(0 15px 30px rgba(0,0,0,0.65))',
+      transform: 'scale(1.1) rotate(3deg)', filter: 'drop-shadow(0 15px 30px rgba(0,0,0,0.6))',
     }}>
-      {/* Outer frame */}
       <div style={{
-        position: 'absolute', inset: -2, background: 'linear-gradient(135deg, #bbb 0%, #666 50%, #888 100%)',
+        position: 'absolute', inset: -2, background: 'linear-gradient(135deg, #bbb, #666, #888)',
         borderRadius: 12, zIndex: -1, border: '1px solid rgba(255,255,255,0.3)',
       }} />
-      <div style={{
-        position: 'relative', width: 122, height: 54, background: '#fff', borderRadius: 10, overflow: 'hidden',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}>
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '50%', background: 'linear-gradient(to bottom, rgba(255,255,255,0.4), transparent)' }} />
-        <span style={{ fontFamily: "'Segoe UI', sans-serif", fontWeight: 800, fontSize: dragging.word.text.length > 9 ? 12 : 15, color: '#1e293b', textTransform: 'uppercase' }}>
+      <div style={{ position: 'relative', width: 110, height: 44, background: '#fff', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ fontFamily: "'Segoe UI', sans-serif", fontWeight: 800, fontSize: 14, color: '#1e293b', textTransform: 'uppercase' }}>
           {dragging.word.text}
         </span>
       </div>
@@ -71,7 +66,7 @@ function DragGhost({ dragging }) {
   )
 }
 
-// ─── Main Game Orchestrator ───────────────────────────────────────────
+// ─── Main Game Component ────────────────────────────────────────────────────────
 export default function GameContainer() {
   const [sortedWords, setSortedWords] = useState({})
   const [wrongWords,  setWrongWords]  = useState(new Set())
@@ -82,9 +77,8 @@ export default function GameContainer() {
   const [incorrect,   setIncorrect]  = useState(0)
   const [gameOver,    setGameOver]   = useState(false)
   const [isPaused,    setIsPaused]   = useState(false)
-
-  // Feedback Flash States
-  const [flashType, setFlashType] = useState(null) // 'correct' | 'wrong' | null
+  const [flashType,   setFlashType]  = useState(null) 
+  const [isCelebrating, setIsCelebrating] = useState(false)
 
   const [beltWords,     setBeltWords]     = useState([])
   const [spawnIndex,    setSpawnIndex]    = useState(0)
@@ -97,34 +91,40 @@ export default function GameContainer() {
 
   useEffect(() => { isPausedRef.current = isPaused }, [isPaused])
 
-  // Spawning: Always starts from LHS belt edge (x=170)
+  // Spawning Words
   useEffect(() => {
     if (spawnIndex >= ALL_WORDS.length || isPaused) return
     const t = setTimeout(() => {
       const id = ALL_WORDS[spawnIndex].id
       setBeltWords(p => [...p, id])
-      setWordPositions(p => ({ ...p, [id]: { x: 170 } })) // Belt starts at left: 170
+      setWordPositions(p => ({ ...p, [id]: { x: 170 } }))
       setSpawnIndex(i => i + 1)
     }, spawnIndex === 0 ? 500 : 2800)
     return () => clearTimeout(t)
   }, [spawnIndex, isPaused])
 
-  // Belt Motion
+  // Belt Motion & Missed Word Wrap-around Logic
   useEffect(() => {
     const interval = setInterval(() => {
-      if (isPausedRef.current) return
+      if (isPausedRef.current || isCelebrating) return
       setWordPositions(prev => {
         const next = { ...prev }
         Object.keys(next).forEach(id => {
-          if (!sortedWords[id]) next[id] = { x: (next[id]?.x ?? 170) + BELT_SPEED }
+          if (!sortedWords[id]) {
+            let nextX = (next[id]?.x ?? 170) + BELT_SPEED
+            // RE-SPAWN MISSED WORDS: If word passes the bins (approx x=innerWidth-300)
+            if (nextX > window.innerWidth - 200) {
+              nextX = 170
+            }
+            next[id] = { x: nextX }
+          }
         })
         return next
       })
     }, 16)
     return () => clearInterval(interval)
-  }, [sortedWords])
+  }, [sortedWords, isCelebrating])
 
-  // Drop Implementation
   const handleDragStart = useCallback((e, word) => {
     if (isPausedRef.current) return
     const rect = e.currentTarget.getBoundingClientRect()
@@ -143,19 +143,30 @@ export default function GameContainer() {
       binsRef.current.forEach(el => {
         if (!el) return
         const r = el.getBoundingClientRect()
-        if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) {
-          droppedCatId = el.dataset.categoryId
-        }
+        if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) droppedCatId = el.dataset.categoryId
       })
+
       if (droppedCatId) {
         if (ANSWERS[word.id] === droppedCatId) {
-          sounds.correct(); setSortedWords(p => ({ ...p, [word.id]: droppedCatId })); setScore(s => s + 1); setGlowingBin(droppedCatId)
-          setFlashType('correct'); setTimeout(() => setFlashType(null), 1000)
+          sounds.correct(); 
+          setSortedWords(p => ({ ...p, [word.id]: droppedCatId })); 
+          setScore(s => s + 1); 
+          setGlowingBin(droppedCatId)
+          setFlashType('correct'); 
+          setTimeout(() => setFlashType(null), 800)
           setParticles(p => [...p, { id: Date.now(), x: e.clientX, y: e.clientY, color: CATEGORIES.find(c => c.id === droppedCatId).color }])
           setTimeout(() => setGlowingBin(null), 900)
         } else {
-          sounds.wrong(); setIncorrect(i => i + 1); setWrongWords(p => new Set([...p, word.id])); setShakingBin(droppedCatId)
-          setFlashType('wrong'); setTimeout(() => setFlashType(null), 1000)
+          sounds.wrong(); 
+          setIncorrect(i => i + 1); 
+          setWrongWords(p => new Set([...p, word.id])); 
+          setShakingBin(droppedCatId)
+          setFlashType('wrong'); 
+          setTimeout(() => {
+             setFlashType(null)
+             // RE-SPAWN INCORRECT WORDS: Start back on belt after flash
+             setWordPositions(p => ({ ...p, [word.id]: { x: 170 }}))
+          }, 800)
           setTimeout(() => { setWrongWords(p => { const n = new Set(p); n.delete(word.id); return n }); setShakingBin(null) }, 600)
         }
       }
@@ -165,28 +176,56 @@ export default function GameContainer() {
     return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
   }, [dragging])
 
+  // Completion Check
+  useEffect(() => {
+    if (Object.keys(sortedWords).length === ALL_WORDS.length && ALL_WORDS.length > 0) {
+      setIsCelebrating(true)
+      // Multi-firework effect
+      const colors = ['#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#a855f7']
+      const interval = setInterval(() => {
+        setParticles(p => [...p, {
+          id: Math.random(),
+          x: Math.random() * window.innerWidth,
+          y: Math.random() * (window.innerHeight / 2),
+          color: colors[Math.floor(Math.random() * colors.length)],
+          count: 25
+        }])
+      }, 400)
+      
+      setTimeout(() => {
+        clearInterval(interval)
+        setGameOver(true)
+      }, 4000)
+    }
+  }, [sortedWords])
+
+  const restart = () => {
+    setSortedWords({}); setWrongWords(new Set()); setGlowingBin(null); setShakingBin(null); setParticles([]); setScore(0); setIncorrect(0)
+    setGameOver(false); setIsPaused(false); setIsCelebrating(false); setBeltWords([]); setSpawnIndex(0); setWordPositions({})
+  }
+
   return (
-    <div style={{ 
-      position: 'relative', width: '100%', height: '100vh', overflow: 'hidden', cursor: dragging ? 'grabbing' : 'default', userSelect: 'none',
-      animation: flashType === 'wrong' ? 'container-vibrate 0.4s ease' : 'none' 
-    }}>
+    <div style={{ position: 'relative', width: '100%', height: '100vh', overflow: 'hidden', cursor: dragging ? 'grabbing' : 'default', userSelect: 'none', animation: flashType === 'wrong' ? 'container-vibrate 0.4s ease' : 'none' }}>
       <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${ASSETS.factoryBg})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'brightness(0.65)', zIndex: 0 }} />
       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.1) 45%, rgba(0,0,0,0.8) 100%)', zIndex: 1 }} />
       <EffectsLayer />
 
-      {/* FEEDBACK FLASH OVERLAY */}
-      {flashType && (
-        <div style={{
-          position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 5000,
-          background: flashType === 'correct' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-          boxShadow: flashType === 'correct' ? 'inset 0 0 100px rgba(34, 197, 94, 0.4)' : 'inset 0 0 100px rgba(239, 68, 68, 0.4)',
-          animation: 'fade-out-feedback 1s ease forwards'
-        }} />
+      {/* FEEDBACK FLASH */}
+      {flashType && <div style={{ position: 'absolute', inset: 0, zIndex: 5000, background: flashType === 'correct' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)', boxShadow: flashType === 'correct' ? 'inset 0 0 100px rgba(34,197,94,0.4)' : 'inset 0 0 100px rgba(239,68,68,0.4)', animation: 'fade-out-feedback 0.8s ease forwards', pointerEvents: 'none' }} />}
+
+      {/* STAGE CLEAR BANNER */}
+      {isCelebrating && (
+        <div style={{ position: 'absolute', top: '35%', left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 6000, pointerEvents: 'none' }}>
+          <div style={{ background: 'rgba(0,0,0,0.9)', border: '6px solid #f59e0b', borderRadius: 40, padding: '30px 100px', transform: 'scale(1)', animation: 'banner-pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards' }}>
+            <h2 style={{ color: '#f59e0b', fontSize: 60, margin: 0, letterSpacing: 8, fontWeight: 900, textShadow: '0 0 20px #f59e0b' }}>STAGE CLEAR!</h2>
+            <p style={{ color: '#fff', textAlign: 'center', fontSize: 20, margin: '10px 0 0 0', fontWeight: 600 }}>EXCELLENT SORTING!</p>
+          </div>
+        </div>
       )}
 
-      {/* TOP HUD */}
+      {/* HUD */}
       <div style={{ position: 'absolute', top: 15, left: 15, right: 15, display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 1000, gap: 15 }}>
-        <div style={{ background: '#000', borderRadius: 12, padding: '12px 28px', border: '2px solid #f59e0b', color: '#f59e0b', fontWeight: 900, fontSize: 18, letterSpacing: 2 }}>🏭 WORD FACTORY</div>
+        <div style={{ background: '#000', borderRadius: 12, padding: '12px 28px', border: '2px solid #f59e0b', color: '#f59e0b', fontWeight: 900, fontSize: 18 }}>🏭 WORD FACTORY</div>
         <div style={{ flex: 1 }}><ProgressBar sorted={Object.keys(sortedWords).length} total={ALL_WORDS.length} score={score} incorrect={incorrect} /></div>
         <button onClick={() => setIsPaused(!isPaused)} style={{ background: isPaused ? '#10b981' : '#111', border: '2px solid #f59e0b', borderRadius: 12, color: '#f59e0b', padding: '10px 24px', fontWeight: 900, cursor: 'pointer' }}>{isPaused ? '▶ RESUME' : '⏸ PAUSE'}</button>
       </div>
@@ -201,14 +240,14 @@ export default function GameContainer() {
 
       <CategoryBins categories={CATEGORIES} binCounts={Object.values(sortedWords).reduce((acc, cat) => ({...acc, [cat]: (acc[cat] || 0) + 1}), {})} glowingBin={glowingBin} shakingBin={shakingBin} dragging={dragging} binsRef={binsRef} />
       
-      <div style={{ zIndex: 200, position: 'absolute', left: 20, bottom: 10 }}>
+      <div style={{ zIndex: 40, position: 'absolute', left: 0, bottom: 0 }}>
         <RobotGuide isPaused={isPaused} />
       </div>
 
       <DragGhost dragging={dragging} />
-      {particles.map(p => <ParticleBurst key={p.id} x={p.x} y={p.y} color={p.color} onDone={() => setParticles(pr => pr.filter(x => x.id !== p.id))} />)}
+      {particles.map(p => <ParticleBurst key={p.id} x={p.x} y={p.y} color={p.color} count={p.count} onDone={() => setParticles(pr => pr.filter(x => x.id !== p.id))} />)}
       
-      {isPaused && !gameOver && (
+      {isPaused && !gameOver && !isCelebrating && (
         <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', backdropFilter: 'blur(3px)' }}>
           <div style={{ background: 'rgba(0,0,0,0.9)', border: '4px solid #f59e0b', borderRadius: 40, padding: '25px 80px', animation: 'blink 1.2s infinite' }}>
             <h1 style={{ color: '#f59e0b', fontSize: 40, margin: 0, letterSpacing: 6 }}>PAUSED</h1>
@@ -226,6 +265,7 @@ export default function GameContainer() {
         }
         @keyframes fade-out-feedback { from { opacity: 1; } to { opacity: 0; } }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        @keyframes banner-pop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
       `}</style>
     </div>
   )
