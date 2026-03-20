@@ -66,7 +66,7 @@ export default function RobotGuide({ isPaused, externalMessage }) {
         src="/assets/robot3.png"
         alt="Robot Assistant"
         style={{
-          width: 320,
+          width: 330,
           height: 'auto',
           filter: 'drop-shadow(0 25px 45px rgba(0,0,0,0.8))',
           animation: isPaused ? 'none' : 'robot-hover 3s ease-in-out infinite',

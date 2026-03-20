@@ -1,7 +1,6 @@
 // ─── GameContainer Component ───────────────────────────────────────────────────
-// Queue-based spawning for retries and visual fixes.
-// Belt and words now move L-to-R in perfect sync.
-// Action-driven Robot Feedback integrated.
+// Continuous retry spawning and action-driven robot feedback.
+// Perfected sync and visual fade at edge.
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 
@@ -21,7 +20,6 @@ const CATEGORIES = QUESTION.categories
 const ANSWERS    = QUESTION.correct_answer
 
 // SYNC: Code-driven move exactly matching CSS 2.2s/200px (L-to-R)
-// 200px / (2.2s * 60fps) = 1.5151515
 const BELT_SPEED = 1.5151515
 const SPAWN_DISTANCE_THRESHOLD = 400 
 
@@ -45,20 +43,20 @@ function ParticleBurst({ x, y, color, onDone, count = 15 }) {
   )
 }
 
-// ─── Drag Ghost (Downsized Wrench) ──────────────────────────────────────────────
+// ─── Drag Ghost ────────────────────────────────────────────────────────────────
 function DragGhost({ dragging }) {
   if (!dragging) return null
   return (
     <div style={{
       position: 'fixed',
       left:  dragging.x - (dragging.offsetX || 105),
-      top:   dragging.y - (dragging.offsetY || 60),
+      top:   dragging.y - (dragging.offsetY || 75),
       pointerEvents: 'none', zIndex: 10001,
       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
       transform: 'rotate(12deg)', 
       filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.65))',
     }}>
-      <img src={ASSETS.wrench} alt="" style={{ width: 210, height: 120, objectFit: 'cover' }} />
+      <img src={ASSETS.wrench} alt="" style={{ width: 200, height: 120, objectFit: 'cover' }} />
       <span style={{
         position: 'absolute', top: '54%', left: '50%', transform: 'translate(-50%, -50%)',
         fontFamily: "'Segoe UI', sans-serif", fontWeight: 900, fontSize: 13,
@@ -84,7 +82,6 @@ export default function GameContainer() {
   const [isCelebrating, setIsCelebrating] = useState(false)
   const [robotFeedback, setRobotFeedback] = useState('')
 
-  // Queue Management
   const [spawnQueue,   setSpawnQueue]   = useState(INITIAL_QUEUE.map(w => w.id))
   const [retryQueue,   setRetryQueue]   = useState([])
   const [beltWords,    setBeltWords]    = useState([])
@@ -104,26 +101,26 @@ export default function GameContainer() {
 
       setWordPositions(prev => {
         const next = { ...prev }
-        let furthestSpawnedX = 0
+        
+        // Final belt limit (visible end)
+        const BELT_LIMIT = window.innerWidth - 300 
 
-        // 1. Move existing words
         Object.keys(next).forEach(id => {
           if (!sortedWords[id]) {
             let nextX = (next[id]?.x ?? 170) + BELT_SPEED
             
-            // MISS HANDLE: If word passes the right edge
-            if (nextX > window.innerWidth - 100) {
+            // MISS HANDLE: If word reaches the belt end
+            if (nextX >= BELT_LIMIT) {
               setRetryQueue(q => q.includes(id) ? q : [...q, id])
               delete next[id]
               setBeltWords(bw => bw.filter(bid => bid !== id))
               return
             }
             next[id] = { x: nextX }
-            if (nextX > furthestSpawnedX) furthestSpawnedX = nextX
           }
         })
 
-        // 2. Logic-based spawning: Only spawn if gap is clear
+        // Spawning logic: continuous spawning for both initial and retry queue
         const activeWordsOnBelt = Object.keys(next).filter(id => !sortedWords[id])
         const minX = activeWordsOnBelt.length > 0 
           ? Math.min(...activeWordsOnBelt.map(id => next[id].x))
@@ -135,7 +132,8 @@ export default function GameContainer() {
             setSpawnQueue(q => q.slice(1))
             setBeltWords(bw => [...bw, nextId])
             next[nextId] = { x: 170 }
-          } else if (activeWordsOnBelt.length === 0 && retryQueue.length > 0) {
+          } else if (retryQueue.length > 0) {
+            // FIXED: Continuous retry spawning – multiple retries can now occupy the belt
             const nextId = retryQueue[0]
             setRetryQueue(q => q.slice(1))
             setBeltWords(bw => [...bw, nextId])
@@ -154,7 +152,7 @@ export default function GameContainer() {
     const rect = e.currentTarget.getBoundingClientRect()
     setDragging({ word, offsetX: e.clientX - rect.left, offsetY: e.clientY - rect.top, x: e.clientX, y: e.clientY })
     dragRef.current = word
-    setRobotFeedback('') // Clear before drop
+    setRobotFeedback('')
     sounds.drag()
   }, [isCelebrating])
 
@@ -174,14 +172,12 @@ export default function GameContainer() {
       if (droppedCatId) {
         if (ANSWERS[word.id] === droppedCatId) {
           sounds.correct(); setSortedWords(p => ({ ...p, [word.id]: droppedCatId })); setScore(s => s + 1); setGlowingBin(droppedCatId)
-          setFlashType('correct')
-          setRobotFeedback("Great job! That's correct! 🔧")
+          setFlashType('correct'); setRobotFeedback("Great job! That's correct! 🔧")
           setTimeout(() => setFlashType(null), 800)
           setParticles(p => [...p, { id: Date.now(), x: e.clientX, y: e.clientY, color: CATEGORIES.find(c => c.id === droppedCatId).color }])
         } else {
           sounds.wrong(); setIncorrect(i => i + 1); setWrongWords(p => new Set([...p, word.id])); setShakingBin(droppedCatId)
-          setFlashType('wrong')
-          setRobotFeedback("Oops! Wrong bin! Try again! 🔧")
+          setFlashType('wrong'); setRobotFeedback("Oops! Wrong bin! Try again! 🔧")
           setTimeout(() => { 
             setFlashType(null)
             setRetryQueue(q => q.includes(word.id) ? q : [...q, word.id])
@@ -235,23 +231,14 @@ export default function GameContainer() {
         <button onClick={() => setIsPaused(!isPaused)} style={{ background: isPaused ? '#10b981' : '#111', border: '2px solid #f59e0b', borderRadius: 12, color: '#f59e0b', padding: '10px 24px', fontWeight: 900, cursor: 'pointer' }}>{isPaused ? '▶ RESUME' : '⏸ PAUSE'}</button>
       </div>
 
-      {/* QUESTION BOX - TWO LINES */}
       <div style={{ position: 'absolute', top: 95, left: 0, right: 0, textAlign: 'center', zIndex: 100 }}>
         <div style={{ 
-          display: 'inline-flex', 
-          justifyContent: 'center',
-          background: '#000', 
-          borderRadius: 12, 
-          padding: '12px 25px', 
-          border: '1px solid rgba(255,158,11,0.5)', 
-          color: '#fff', 
-          fontSize: 14, 
-          fontWeight: 600,
-          fontStyle: 'italic',
+          display: 'inline-flex', justifyContent: 'center',
+          background: '#000', borderRadius: 12, padding: '12px 25px', 
+          border: '1px solid rgba(255,158,11,0.5)', color: '#fff', 
+          fontSize: 14, fontWeight: 600, fontStyle: 'italic',
           boxShadow: '0 4px 20px rgba(0,0,0,0.8)',
-          maxWidth: '500px',
-          lineHeight: '1.4',
-          textAlign: 'center',
+          maxWidth: '500px', lineHeight: '1.4', textAlign: 'center'
         }}>
           {QUESTION.question_text}
         </div>

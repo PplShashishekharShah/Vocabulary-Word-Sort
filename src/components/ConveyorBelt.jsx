@@ -1,6 +1,6 @@
 // ─── ConveyorBelt Component ───────────────────────────────────────────────────
 // Belt direction corrected to matching word flow (L-to-R).
-// Seamless looping with backgroundSize: 200px.
+// Added smooth edge-fading as wrenches approach the belt end.
 
 import { ASSETS } from '../utils/constants'
 import WordTile from './WordTile'
@@ -15,6 +15,10 @@ export default function ConveyorBelt({
   onDragStart,
   isPaused,
 }) {
+  // Sync the limit with GameContainer logic
+  const BELT_LIMIT = window.innerWidth -220
+  const FADE_START = BELT_LIMIT - 100
+
   return (
     <div style={{
       position: 'relative',
@@ -30,11 +34,9 @@ export default function ConveyorBelt({
         right: 285,
         height: 150,
         backgroundImage: `url(${ASSETS.conveyorBelt})`,
-        // FIXED: backgroundSize set to 200px to match the 200px scroll distance exactly.
         backgroundSize: '200px 100%',
         backgroundRepeat: 'repeat-x',
         backgroundPosition: '0 0',
-        // Speed matched to code logic: 200px in 2.2s.
         animation: isPaused ? 'none' : 'belt-scroll-right 2.2s linear infinite',
         zIndex: 5,
       }} />
@@ -46,6 +48,13 @@ export default function ConveyorBelt({
           if (!word) return null
           const pos = wordPositions[id]
           const isDraggingThis = dragging?.word?.id === id
+          
+          // FADE LOGIC: Calculate opacity based on x-position
+          const currentX = pos?.x ?? 170
+          let opacity = 1
+          if (currentX > FADE_START) {
+            opacity = Math.max(0, 1 - (currentX - FADE_START) / 120)
+          }
 
           return (
             <WordTile
@@ -57,11 +66,13 @@ export default function ConveyorBelt({
               isWrong={wrongWords.has(id)}
               style={{
                 position: 'absolute',
-                left: pos?.x ?? 170,
+                left: currentX,
                 top: 190,
                 transform: 'translateY(-50%)',
-                opacity: (isDraggingThis || sortedWords[id]) ? 0 : 1,
-                visibility: (isDraggingThis || sortedWords[id]) ? 'hidden' : 'visible',
+                // Combined visibilty logic with the new edge-fade
+                opacity: (isDraggingThis || sortedWords[id]) ? 0 : opacity,
+                visibility: (isDraggingThis || sortedWords[id] || opacity <= 0) ? 'hidden' : 'visible',
+                transition: 'opacity 0.1s linear', // Smooth transition for position updates
               }}
             />
           )
