@@ -13,6 +13,7 @@ export default function ConveyorBelt({
   wrongWords,
   dragging,
   onDragStart,
+  onShowHint,
   isPaused,
 }) {
  
@@ -60,6 +61,7 @@ export default function ConveyorBelt({
               key={id}
               word={word}
               onDragStart={onDragStart}
+              onShowHint={onShowHint}
               isDragging={isDraggingThis}
               isCorrect={!!sortedWords[id]}
               isWrong={wrongWords.has(id)}

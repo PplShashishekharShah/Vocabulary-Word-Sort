@@ -7,6 +7,7 @@ import { ASSETS } from '../utils/constants'
 export default function WordTile({
   word,
   onDragStart,
+  onShowHint,
   isDragging,
   isCorrect,
   isWrong,
@@ -59,7 +60,7 @@ export default function WordTile({
           fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
           fontWeight: 900,
           fontSize: word.text.length > 9 ? 14 : 18,
-          color: '#0f172a', // Darker for better contrast
+          color: '#0f172a',
           letterSpacing: 1.5,
           textTransform: 'uppercase',
           pointerEvents: 'none',
@@ -67,6 +68,32 @@ export default function WordTile({
         }}>
           {word.text}
         </span>
+        
+        {/* ── '?' Hint Button ── */}
+        <div 
+          onClick={(e) => { e.stopPropagation(); onShowHint(word); }}
+          onMouseEnter={() => onShowHint(word)}
+          style={{
+            position: 'absolute',
+            top: -15, right: -15,
+            width: 28, height: 28,
+            borderRadius: '50%',
+            background: '#f59e0b',
+            border: '2px solid #000',
+            color: '#000',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 16, fontWeight: 900,
+            cursor: 'help',
+            boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
+            transition: 'transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+            pointerEvents: 'auto', // Ensure it captures events despite parent
+            zIndex: 100,
+          }}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.2)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        >
+          ?
+        </div>
       </div>
 
       {/* ── Red flash border on wrong drop ── */}

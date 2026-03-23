@@ -1,6 +1,6 @@
 // ─── GameContainer Component ───────────────────────────────────────────────────
 // Final high-fidelity educational word sorting game.
-// Integrated Voice, Dynamic Feedback, and Multi-Level Progression.
+// Integrated Voice, Dynamic Feedback, Multi-Level Progression, and Monitor Hints.
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 
@@ -86,6 +86,7 @@ export default function GameContainer() {
   const [flashType,   setFlashType]  = useState(null) 
   const [isCelebrating, setIsCelebrating] = useState(false)
   const [robotFeedback, setRobotFeedback] = useState('')
+  const [activeHint,    setActiveHint]    = useState(null) // { wordText, hintText }
 
   const [spawnQueue,   setSpawnQueue]   = useState(INITIAL_QUEUE.map(w => w.id))
   const [retryQueue,   setRetryQueue]   = useState([])
@@ -96,6 +97,7 @@ export default function GameContainer() {
   const dragRef  = useRef(null)
   const binsRef  = useRef([])
   const isPausedRef = useRef(false)
+  const hintTimeoutRef = useRef(null)
 
   useEffect(() => { isPausedRef.current = isPaused }, [isPaused])
 
@@ -108,6 +110,7 @@ export default function GameContainer() {
     setParticles([])
     setIsCelebrating(false)
     setRobotFeedback(`Level ${currentLevelIdx + 1}: ${QUESTION.theme}! 🏭`)
+    setActiveHint(null)
     setSpawnQueue(INITIAL_QUEUE.map(w => w.id))
     setRetryQueue([])
     setBeltWords([])
@@ -194,6 +197,22 @@ export default function GameContainer() {
     if (!isMuted) sounds.drag()
   }, [isCelebrating, isMuted])
 
+  const handleShowHint = useCallback((word) => {
+    if (isPausedRef.current || isCelebrating) return
+    const hintText = QUESTION.hints?.[word.id] || "No hint available."
+    setActiveHint({ wordText: word.text, hintText })
+    
+    if (!isMuted) {
+      speak(`${word.text} means ${hintText}`)
+    }
+
+    // Auto-clear hint after 5 seconds
+    if (hintTimeoutRef.current) clearTimeout(hintTimeoutRef.current)
+    hintTimeoutRef.current = setTimeout(() => {
+      setActiveHint(null)
+    }, 4000)
+  }, [QUESTION, isMuted, isCelebrating])
+
   useEffect(() => {
     if (!dragging) return
     const onMove = (e) => setDragging(d => d ? { ...d, x: e.clientX, y: e.clientY } : null)
@@ -274,6 +293,28 @@ export default function GameContainer() {
       <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${ASSETS.factoryBg})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'brightness(0.65)', zIndex: 0 }} />
       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.1) 45%, rgba(0,0,0,0.8) 100%)', zIndex: 1 }} />
       
+      {/* MONITOR SCREEN OVERLAY (DYNAMIC HINTS) */}
+      <div style={{
+        position: 'absolute',
+        top: '29%', left: '42%', width: '15%', height: '15%',
+        background: activeHint ? 'rgba(6, 182, 212, 0.15)' : 'rgba(6, 182, 212, 0.05)',
+        boxShadow: activeHint ? 'inset 0 0 40px rgba(6, 182, 212, 0.5), 0 0 20px rgba(6, 182, 212, 0.3)' : 'none',
+        zIndex: 2,
+        borderRadius: 12,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        textAlign: 'center', padding: 5, boxSizing: 'border-box',
+        transition: 'all 0.5s ease',
+      }}>
+        {activeHint ? (
+          <div style={{ animation: 'hint-flicker 0.2s infinite' }}>
+            <h4 style={{ margin: '0 0 5px 0', color: '#67e8f9', fontSize: 16, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 2 }}>{activeHint.wordText}</h4>
+            <p style={{ margin: 0, color: '#fff', fontSize: 13, fontWeight: 600, lineHeight: 1.3 }}>{activeHint.hintText}</p>
+          </div>
+        ) : (
+          <div style={{ opacity: 0.5,color: '#06b6d4', fontSize: 13, fontWeight: 900, letterSpacing: 1 }}>ANALYZING...</div>
+        )}
+      </div>
+
       {/* FULL SCREEN FLASH FEEDBACK */}
       {flashType && (
         <div style={{
@@ -318,8 +359,8 @@ export default function GameContainer() {
         <button onClick={() => setIsPaused(!isPaused)} style={{ background: isPaused ? '#10b981' : '#111', border: '2px solid #f59e0b', borderRadius: 12, color: '#f59e0b', padding: '10px 24px', fontWeight: 900, cursor: 'pointer' }}>{isPaused ? '▶ RESUME' : '⏸ PAUSE'}</button>
       </div>
 
-      {/* HUD ── BOTTOM RIGHT (MUTE TOGGLE) */}
-      <div style={{ position: 'absolute', bottom: 20, right: 20, zIndex: 1000 }}>
+      {/* HUD ── BOTTOM Left (MUTE TOGGLE) */}
+      <div style={{ position: 'absolute', bottom: 20, left: 20, zIndex: 1000 }}>
         <button 
           onClick={() => setIsMuted(!isMuted)} 
           style={{ 
@@ -350,7 +391,17 @@ export default function GameContainer() {
       </div>
 
       <div style={{ position: 'absolute', left: 0, right: 0, bottom: 270, zIndex: 50 }}>
-        <ConveyorBelt beltWords={beltWords} allWords={QUESTION.words} wordPositions={wordPositions} sortedWords={sortedWords} wrongWords={wrongWords} dragging={dragging} onDragStart={handleDragStart} isPaused={isPaused} />
+        <ConveyorBelt 
+          beltWords={beltWords} 
+          allWords={QUESTION.words} 
+          wordPositions={wordPositions} 
+          sortedWords={sortedWords} 
+          wrongWords={wrongWords} 
+          dragging={dragging} 
+          onDragStart={handleDragStart} 
+          onShowHint={handleShowHint}
+          isPaused={isPaused} 
+        />
       </div>
 
       <CategoryBins categories={CATEGORIES} binCounts={binCounts} glowingBin={glowingBin} shakingBin={shakingBin} dragging={dragging} binsRef={binsRef} />
@@ -380,6 +431,7 @@ export default function GameContainer() {
           to { transform: translateX(-50%) scale(1) translateY(-20px); opacity: 0; } 
         }
         @keyframes banner-pop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes hint-flicker { 0%, 100% { opacity: 1; } 50% { opacity: 0.85; } }
       `}</style>
     </div>
   )
