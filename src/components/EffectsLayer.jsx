@@ -33,8 +33,9 @@ function DustParticles() {
             width: p.size,
             height: p.size,
             borderRadius: '50%',
-            background: 'rgba(255,200,100,0.55)',
+            background: 'rgba(34, 211, 238, 0.45)',
             animation: `dust-float ${p.duration}s ${p.delay}s linear infinite`,
+            boxShadow: '0 0 8px rgba(34, 211, 238, 0.2)',
           }}
         />
       ))}
@@ -44,11 +45,11 @@ function DustParticles() {
 
 // ── Factory Blinking Lights ─────────────────────────────────────────────────
 const LIGHTS = [
-  { top: '7%',  left: '4%',   color: '#10b981', delay: 0 },
-  { top: '11%', right: '5%',  color: '#f59e0b', delay: 0.5 },
-  { top: '5%',  left: '48%',  color: '#3b82f6', delay: 0.9 },
-  { top: '14%', left: '22%',  color: '#ef4444', delay: 1.3 },
-  { top: '9%',  right: '22%', color: '#a855f7', delay: 0.3 },
+  { top: '7%',  left: '4%',   color: '#22d3ee', delay: 0 },
+  { top: '11%', right: '5%',  color: '#38bdf8', delay: 0.5 },
+  { top: '5%',  left: '48%',  color: '#67e8f9', delay: 0.9 },
+  { top: '14%', left: '22%',  color: '#22d3ee', delay: 1.3 },
+  { top: '9%',  right: '22%', color: '#38bdf8', delay: 0.3 },
 ]
 
 function FactoryLights() {

@@ -1,6 +1,14 @@
-/* ============================================================
-   WORD SORTING FACTORY — Global Styles & Keyframe Animations
-   ============================================================ */
+:root {
+  --bg-deep: #020617;
+  --bg-glass: rgba(15, 23, 42, 0.75);
+  --accent-cyan: #22d3ee;
+  --accent-blue: #38bdf8;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --glow-cyan: 0 0 15px rgba(34, 211, 238, 0.4);
+  --glow-blue: 0 0 15px rgba(56, 189, 248, 0.4);
+  --border-cyan: rgba(34, 211, 238, 0.3);
+}
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -15,8 +23,40 @@ html, body, #root {
 }
 
 body {
-  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  background: #0a0a0a;
+  font-family: 'Outfit', 'Inter', 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+}
+
+.glass {
+  background: var(--bg-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-cyan);
+  box-shadow: var(--glow-cyan);
+}
+
+.btn-premium {
+  background: linear-gradient(135deg, #0ea5e9, #2563eb);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+}
+
+.btn-premium:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(37, 99, 235, 0.5);
+  filter: brightness(1.1);
+}
+
+.btn-premium:active {
+  transform: translateY(1px);
 }
 
 /* ── Conveyor Belt Scroll ──────────────────────────────────── */

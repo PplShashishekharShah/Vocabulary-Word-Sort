@@ -14,7 +14,7 @@ export default function CompletionScreen({ score, incorrect, total, onRestart })
   const stats = [
     { label: 'Correct',  value: score,       color: '#10b981', emoji: '✅' },
     { label: 'Wrong',    value: incorrect,   color: '#ef4444', emoji: '❌' },
-    { label: 'Accuracy', value: `${accuracy}%`, color: '#f59e0b', emoji: '🎯' },
+    { label: 'Accuracy', value: `${accuracy}%`, color: '#38bdf8', emoji: '🎯' },
   ]
 
   return (
@@ -24,17 +24,17 @@ export default function CompletionScreen({ score, incorrect, total, onRestart })
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'rgba(0,0,0,0.88)',
+      background: 'rgba(2, 6, 23, 0.95)',
       zIndex: 10000,
       animation: 'fade-in 0.5s ease',
     }}>
-      <div style={{
-        background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
-        border: '2px solid #f59e0b',
-        borderRadius: 28,
+      <div className="glass" style={{
+        background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.8) 100%)',
+        border: '3px solid var(--accent-cyan)',
+        borderRadius: 32,
         padding: '52px 68px',
         textAlign: 'center',
-        boxShadow: '0 0 70px rgba(245,158,11,0.35), 0 24px 64px rgba(0,0,0,0.6)',
+        boxShadow: '0 0 80px rgba(34, 211, 238, 0.25), 0 24px 64px rgba(0,0,0,0.7)',
         maxWidth: 500,
         animation: 'scale-in 0.5s cubic-bezier(0.34,1.56,0.64,1)',
       }}>
@@ -44,12 +44,13 @@ export default function CompletionScreen({ score, incorrect, total, onRestart })
         {/* Title */}
         <h1 style={{
           fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-          fontSize: 38,
-          color: '#f59e0b',
+          fontSize: 40,
+          color: 'var(--accent-cyan)',
           marginBottom: 10,
-          textShadow: '0 0 24px rgba(245,158,11,0.55)',
+          textShadow: '0 0 25px rgba(34, 211, 238, 0.5)',
+          fontWeight: 900,
         }}>
-          Factory Complete!
+          Mission Complete!
         </h1>
 
         {/* Sub-title */}
@@ -63,29 +64,33 @@ export default function CompletionScreen({ score, incorrect, total, onRestart })
         </p>
 
         {/* Stats cards */}
-        <div style={{ display: 'flex', gap: 20, justifyContent: 'center', marginBottom: 36 }}>
+        <div style={{ display: 'flex', gap: 20, justifyContent: 'center', marginBottom: 40 }}>
           {stats.map(s => (
-            <div key={s.label} style={{
-              background: 'rgba(255,255,255,0.05)',
-              borderRadius: 14,
-              padding: '18px 26px',
-              border: `1px solid ${s.color}44`,
+            <div key={s.label} className="glass" style={{
+              borderRadius: 18,
+              padding: '20px 28px',
+              border: `1px solid ${s.color}66`,
+              flex: 1,
+              background: 'rgba(255,255,255,0.03)',
             }}>
-              <div style={{ fontSize: 30 }}>{s.emoji}</div>
+              <div style={{ fontSize: 32 }}>{s.emoji}</div>
               <div style={{
                 color: s.color,
                 fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-                fontWeight: 700,
-                fontSize: 30,
-                marginTop: 4,
+                fontWeight: 900,
+                fontSize: 32,
+                marginTop: 6,
+                textShadow: `0 0 10px ${s.color}44`,
               }}>
                 {s.value}
               </div>
               <div style={{
-                color: 'rgba(255,255,255,0.45)',
-                fontSize: 12,
-                marginTop: 6,
-                letterSpacing: 0.5,
+                color: 'var(--text-secondary)',
+                fontSize: 13,
+                marginTop: 8,
+                letterSpacing: 1,
+                fontWeight: 700,
+                textTransform: 'uppercase',
               }}>
                 {s.label}
               </div>
@@ -96,26 +101,11 @@ export default function CompletionScreen({ score, incorrect, total, onRestart })
         {/* Restart button */}
         <button
           onClick={onRestart}
+          className="btn-premium"
           style={{
-            background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-            border: 'none',
-            borderRadius: 14,
-            padding: '15px 44px',
-            color: '#1a1a2e',
-            fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-            fontWeight: 700,
-            fontSize: 19,
-            cursor: 'pointer',
-            boxShadow: '0 4px 22px rgba(245,158,11,0.45)',
-            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.transform = 'scale(1.07)'
-            e.currentTarget.style.boxShadow = '0 6px 30px rgba(245,158,11,0.6)'
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.transform = 'scale(1)'
-            e.currentTarget.style.boxShadow = '0 4px 22px rgba(245,158,11,0.45)'
+            padding: '18px 52px',
+            fontSize: 20,
+            boxShadow: '0 0 30px rgba(37, 99, 235, 0.4)',
           }}
         >
           🔄 Play Again

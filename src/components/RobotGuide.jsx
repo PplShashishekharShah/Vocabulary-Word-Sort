@@ -25,7 +25,7 @@ export default function RobotGuide({ isPaused, externalMessage }) {
   return (
     <div style={{
       position: 'relative',
-      width: 440,
+      width: 420,
       pointerEvents: 'none',
       display: 'flex',
       flexDirection: 'column',
@@ -42,20 +42,23 @@ export default function RobotGuide({ isPaused, externalMessage }) {
         <img
           src="/assets/speech_bubble.png"
           alt=""
-          style={{ width: '100%', filter: 'drop-shadow(0 10px 25px rgba(0,0,0,0.65))' }}
+          style={{ 
+            width: '100%', 
+            filter: 'drop-shadow(0 12px 30px rgba(0,0,0,0.5)) hue-rotate(185deg) brightness(1.1) saturate(0.8)',
+          }}
         />
         <div style={{
           position: 'absolute',
-          top: '18%', left: '20%', right: '20%', bottom: '30%', 
+          top: '25%', left: '20%', right: '20%', bottom: '30%', 
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           textAlign: 'center',
           fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
           fontWeight: 900,
           fontSize: 15, 
-          lineHeight: 1.2,
-          color: '#000',
-          paddingLeft: '35px',
-          paddingRight: '15px',
+          lineHeight: 1.3,
+          color: '#1e293b', // Deep slate for readability
+          paddingLeft: '40px',
+          paddingRight: '20px',
         }}>
           {msg}
         </div>

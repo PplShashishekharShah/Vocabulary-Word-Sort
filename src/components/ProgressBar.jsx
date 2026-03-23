@@ -18,12 +18,13 @@ export default function ProgressBar({ sorted, total, score, incorrect }) {
     }}>
       {/* Word count */}
       <div style={{
-        color: '#f59e0b',
+        color: 'var(--accent-cyan)',
         fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-        fontWeight: 700,
+        fontWeight: 900,
         fontSize: 14,
         whiteSpace: 'nowrap',
-        letterSpacing: 0.5,
+        letterSpacing: 1,
+        textShadow: '0 0 10px rgba(34, 211, 238, 0.3)',
       }}>
         ⚙️ {sorted} / {total}
       </div>
@@ -41,10 +42,10 @@ export default function ProgressBar({ sorted, total, score, incorrect }) {
         <div style={{
           height: '100%',
           width: `${pct}%`,
-          background: 'linear-gradient(90deg, #f59e0b, #10b981)',
+          background: 'linear-gradient(90deg, var(--accent-blue), var(--accent-cyan))',
           borderRadius: 999,
-          transition: 'width 0.5s ease',
-          boxShadow: '0 0 10px rgba(16,185,129,0.6)',
+          transition: 'width 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+          boxShadow: '0 0 15px rgba(34, 211, 238, 0.5)',
         }} />
       </div>
 

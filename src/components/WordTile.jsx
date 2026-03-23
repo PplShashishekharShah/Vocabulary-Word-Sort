@@ -44,7 +44,12 @@ export default function WordTile({
         src={ASSETS.wrench}
         alt=""
         draggable={false}
-        style={{ width: 200, height: 150, objectFit: 'cover' }}
+        style={{ 
+          width: 200, 
+          height: 150, 
+          objectFit: 'cover',
+          filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.5)) hue-rotate(190deg) contrast(1.1) brightness(0.95)',
+        }}
       />
 
       {/* ── Word text — sitting on the wrench head/body ── */}
@@ -64,7 +69,7 @@ export default function WordTile({
           letterSpacing: 1.5,
           textTransform: 'uppercase',
           pointerEvents: 'none',
-          textShadow: '0 2px 4px rgba(255,255,255,0.4), 0 0 2px rgba(255,255,255,0.8)',
+          textShadow: '0 0 1px rgba(255,255,255,0.8), 0 1px 2px rgba(255,255,255,1)',
         }}>
           {word.text}
         </span>
@@ -73,24 +78,24 @@ export default function WordTile({
         <div 
           onClick={(e) => { e.stopPropagation(); onShowHint(word); }}
           onMouseEnter={() => onShowHint(word)}
+          className="glass"
           style={{
             position: 'absolute',
-            top: -15, right: -15,
-            width: 28, height: 28,
+            top: -42, right: -22,
+            width: 32, height: 32,
             borderRadius: '50%',
-            background: '#f59e0b',
-            border: '2px solid #000',
-            color: '#000',
+            color: 'var(--accent-cyan)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 16, fontWeight: 900,
+            fontSize: 18, fontWeight: 900,
             cursor: 'help',
-            boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
-            transition: 'transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+            boxShadow: '0 0 15px var(--accent-cyan)',
+            border: '2px solid var(--accent-cyan)',
+            transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
             pointerEvents: 'auto', // Ensure it captures events despite parent
             zIndex: 100,
           }}
-          onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.2)'}
-          onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          onMouseOver={(e) => { e.currentTarget.style.transform = 'scale(1.25)'; e.currentTarget.style.boxShadow = '0 0 25px var(--accent-cyan)'; }}
+          onMouseOut={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 0 15px var(--accent-cyan)'; }}
         >
           ?
         </div>

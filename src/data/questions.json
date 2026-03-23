@@ -21,9 +21,9 @@
       ],
 
       "categories": [
-        { "id": "cat_1", "label": "Positive Feelings", "color": "#f59e0b", "emoji": "😊" },
-        { "id": "cat_2", "label": "Sad Feelings", "color": "#3b82f6", "emoji": "😢" },
-        { "id": "cat_3", "label": "Angry Feelings", "color": "#ef4444", "emoji": "😡" }
+        { "id": "cat_1", "label": "Positive Feelings", "color": "#fbbf24", "glow": "#fbbf24", "emoji": "😊" },
+        { "id": "cat_2", "label": "Sad Feelings", "color": "#38bdf8", "glow": "#38bdf8", "emoji": "😢" },
+        { "id": "cat_3", "label": "Angry Feelings", "color": "#f43f5e", "glow": "#f43f5e", "emoji": "😡" }
       ],
 
       "hints": {
@@ -70,9 +70,9 @@
       ],
 
       "categories": [
-        { "id": "cat_1", "label": "Build/Create", "color": "#10b981", "emoji": "🏗️" },
-        { "id": "cat_2", "label": "Break/Damage", "color": "#ef4444", "emoji": "💥" },
-        { "id": "cat_3", "label": "Fix/Improve", "color": "#3b82f6", "emoji": "🛠️" }
+        { "id": "cat_1", "label": "Build/Create", "color": "#34d399", "glow": "#34d399", "emoji": "🏗️" },
+        { "id": "cat_2", "label": "Break/Damage", "color": "#fb7185", "glow": "#fb7185", "emoji": "💥" },
+        { "id": "cat_3", "label": "Fix/Improve", "color": "#38bdf8", "glow": "#38bdf8", "emoji": "🛠️" }
       ],
 
       "hints": {
@@ -119,9 +119,9 @@
   ],
 
   "categories": [
-    { "id": "cat_1", "label": "Fast Movement", "color": "#22c55e", "emoji": "⚡" },
-    { "id": "cat_2", "label": "Slow Movement", "color": "#3b82f6", "emoji": "🐢" },
-    { "id": "cat_3", "label": "Unsteady Movement", "color": "#eab308", "emoji": "🌀" }
+    { "id": "cat_1", "label": "Fast Movement", "color": "#4ade80", "glow": "#4ade80", "emoji": "⚡" },
+    { "id": "cat_2", "label": "Slow Movement", "color": "#38bdf8", "glow": "#38bdf8", "emoji": "🐢" },
+    { "id": "cat_3", "label": "Unsteady Movement", "color": "#fbbf24", "glow": "#fbbf24", "emoji": "🌀" }
   ],
 
   "hints": {
@@ -167,9 +167,9 @@
   ],
 
   "categories": [
-    { "id": "cat_1", "label": "Synonyms", "color": "#8b5cf6", "emoji": "🔁" },
-    { "id": "cat_2", "label": "Antonyms", "color": "#f97316", "emoji": "⚖️" },
-    { "id": "cat_3", "label": "Homophones", "color": "#06b6d4", "emoji": "🔊" }
+    { "id": "cat_1", "label": "Synonyms", "color": "#a78bfa", "glow": "#a78bfa", "emoji": "🔁" },
+    { "id": "cat_2", "label": "Antonyms", "color": "#fb923c", "glow": "#fb923c", "emoji": "⚖️" },
+    { "id": "cat_3", "label": "Homophones", "color": "#22d3ee", "glow": "#22d3ee", "emoji": "🔊" }
   ],
 
   "hints": {

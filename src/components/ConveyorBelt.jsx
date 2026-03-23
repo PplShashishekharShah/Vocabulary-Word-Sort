@@ -40,6 +40,7 @@ export default function ConveyorBelt({
         backgroundPosition: '0 0',
         animation: isPaused ? 'none' : 'belt-scroll-right 2.2s linear infinite',
         zIndex: 5,
+        filter: 'brightness(0.9) hue-rotate(190deg) saturate(1.2)',
       }} />
 
       {/* ── Word tiles — sitting inside the belt surface ── */}

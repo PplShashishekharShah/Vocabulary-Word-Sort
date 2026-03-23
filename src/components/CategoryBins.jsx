@@ -76,35 +76,36 @@ function BinItem({ category, index, sortedCount, isGlowing, isShaking, binsRef }
       }}
     >
       {/* ── Focused Label Strip ── */}
-      <div style={{
-        background: 'rgba(0,0,0,1)', // Solid black
+      <div className="glass" style={{
         border: `2px solid ${category.color}`,
-        borderRadius: 8,
-        padding: '6px 15px',
-        marginBottom: -12, // Move it closer to the bin
+        borderRadius: 12,
+        padding: '8px 18px',
+        marginBottom: -10, // Move it closer to the bin
         position: 'relative',
-        top: -5, // Lowering the label as requested
+        top: -5,
         textAlign: 'center',
         boxShadow: isGlowing
-          ? `0 0 25px ${category.glow}`
-          : '0 4px 12px rgba(0,0,0,0.7)',
-        width: 155,
+          ? `0 0 30px ${category.glow}`
+          : `0 4px 15px rgba(0,0,0,0.4), inset 0 0 10px ${category.glow}33`,
+        minWidth: 180,
         boxSizing: 'border-box',
         zIndex: 20,
+        transition: 'all 0.3s ease',
       }}>
         <div style={{
           fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
           fontWeight: 900,
-          fontSize: 10,
-          color: category.color,
+          fontSize: 11,
+          color: '#fff',
           textTransform: 'uppercase',
-          letterSpacing: 1.2,
-          lineHeight: 1.1,
+          letterSpacing: 1.5,
+          lineHeight: 1.2,
+          textShadow: `0 0 8px ${category.glow}`,
         }}>
           {category.label}
         </div>
         {sortedCount > 0 && (
-          <div style={{ fontSize: 9, color: '#10b981', marginTop: 2, fontWeight: 700 }}>
+          <div style={{ fontSize: 10, color: 'var(--accent-cyan)', marginTop: 4, fontWeight: 800, letterSpacing: 0.5 }}>
             {sortedCount} SAVED
           </div>
         )}
@@ -117,8 +118,9 @@ function BinItem({ category, index, sortedCount, isGlowing, isShaking, binsRef }
         overflow: 'hidden',
         position: 'relative',
         filter: isGlowing
-          ? `drop-shadow(0 0 15px ${category.color})`
-          : 'drop-shadow(0 8px 20px rgba(0,0,0,0.8))',
+          ? `drop-shadow(0 0 20px ${category.color}) brightness(1.2)`
+          : 'drop-shadow(0 8px 25px rgba(0,0,0,0.6))',
+        transition: 'filter 0.3s ease',
       }}>
         <img
           src={ASSETS.bins}
@@ -131,14 +133,15 @@ function BinItem({ category, index, sortedCount, isGlowing, isShaking, binsRef }
             width: IMG_W,
             height: '100%',
             objectFit: 'cover',
+            filter: 'hue-rotate(-10deg) saturate(1.1)',
           }}
         />
         {isGlowing && (
           <div style={{
             position: 'absolute',
             inset: 0,
-            background: `radial-gradient(circle, ${category.glow} 0%, transparent 80%)`,
-            animation: 'bin-glow-pulse 0.5s ease',
+            background: `radial-gradient(circle, ${category.glow} 0%, transparent 75%)`,
+            animation: 'bin-glow-pulse 0.6s ease infinite alternate',
           }} />
         )}
       </div>

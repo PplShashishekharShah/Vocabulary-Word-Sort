@@ -238,11 +238,14 @@ export default function GameContainer() {
           if (!isMuted) sounds.wrong()
           setIncorrect(i => i + 1); setWrongWords(p => new Set([...p, word.id])); setShakingBin(droppedCatId)
           setFlashType('wrong'); setRobotFeedback(`Oops! "${word.text}" means ${hint}. Try another bin!`)
+          
+          // Immediate vanish from belt so it can't be picked again
+          setRetryQueue(q => q.includes(word.id) ? q : [...q, word.id])
+          setWordPositions(p => { const next = {...p}; delete next[word.id]; return next })
+          setBeltWords(bw => bw.filter(bid => bid !== word.id))
+
           setTimeout(() => { 
             setFlashType(null)
-            setRetryQueue(q => q.includes(word.id) ? q : [...q, word.id])
-            setWordPositions(p => { const next = {...p}; delete next[word.id]; return next })
-            setBeltWords(bw => bw.filter(bid => bid !== word.id))
           }, 1500)
           setTimeout(() => { setWrongWords(p => { const n = new Set(p); n.delete(word.id); return n }); setShakingBin(null) }, 600)
         }
@@ -290,28 +293,30 @@ export default function GameContainer() {
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100vh', overflow: 'hidden', cursor: dragging ? 'grabbing' : 'default', userSelect: 'none', animation: flashType === 'wrong' ? 'container-vibrate 0.4s ease' : 'none' }}>
-      <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${ASSETS.factoryBg})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'brightness(0.65)', zIndex: 0 }} />
-      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.1) 45%, rgba(0,0,0,0.8) 100%)', zIndex: 1 }} />
+      <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${ASSETS.factoryBg})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'brightness(0.55) saturate(1.2) hue-rotate(185deg)', zIndex: 0 }} />
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(2, 6, 23, 0.7) 0%, rgba(2, 6, 23, 0.3) 45%, rgba(2, 6, 23, 0.9) 100%)', zIndex: 1 }} />
       
       {/* MONITOR SCREEN OVERLAY (DYNAMIC HINTS) */}
       <div style={{
         position: 'absolute',
-        top: '29%', left: '42%', width: '15%', height: '15%',
-        background: activeHint ? 'rgba(6, 182, 212, 0.15)' : 'rgba(6, 182, 212, 0.05)',
-        boxShadow: activeHint ? 'inset 0 0 40px rgba(6, 182, 212, 0.5), 0 0 20px rgba(6, 182, 212, 0.3)' : 'none',
+        top: '29%', left: '42.2%', width: '15.2%', height: '15.2%',
+        background: activeHint ? 'rgba(34, 211, 238, 0.12)' : 'transparent',
+        border: activeHint ? '1px solid rgba(34, 211, 238, 0.3)' : 'none',
+        boxShadow: activeHint ? '0 0 20px rgba(34, 211, 238, 0.2)' : 'none',
         zIndex: 2,
-        borderRadius: 12,
+        borderRadius: 16,
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        textAlign: 'center', padding: 5, boxSizing: 'border-box',
-        transition: 'all 0.5s ease',
+        textAlign: 'center', padding: 8, boxSizing: 'border-box',
+        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+        backdropFilter: activeHint ? 'blur(4px)' : 'none',
       }}>
         {activeHint ? (
           <div style={{ animation: 'hint-flicker 0.2s infinite' }}>
-            <h4 style={{ margin: '0 0 5px 0', color: '#67e8f9', fontSize: 16, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 2 }}>{activeHint.wordText}</h4>
+            <h4 style={{ margin: '0 0 5px 0', color: 'var(--accent-cyan)', fontSize: 16, fontWeight: 900, textTransform: 'uppercase', letterSpacing: 2 }}>{activeHint.wordText}</h4>
             <p style={{ margin: 0, color: '#fff', fontSize: 13, fontWeight: 600, lineHeight: 1.3 }}>{activeHint.hintText}</p>
           </div>
         ) : (
-          <div style={{ opacity: 0.5,color: '#06b6d4', fontSize: 13, fontWeight: 900, letterSpacing: 1 }}>ANALYZING...</div>
+          <div style={{ opacity: 0.4, color: 'var(--accent-cyan)', fontSize: 12, fontWeight: 900, letterSpacing: 2 }}>SYSTEM READY</div>
         )}
       </div>
 
@@ -345,8 +350,8 @@ export default function GameContainer() {
 
       {isCelebrating && (
         <div style={{ position: 'absolute', top: '35%', left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 6000, pointerEvents: 'none' }}>
-          <div style={{ background: 'rgba(0,0,0,0.92)', border: '6px solid #f59e0b', borderRadius: 40, padding: '30px 100px', animation: 'banner-pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards' }}>
-            <h2 style={{ color: '#f59e0b', fontSize: 60, margin: 0, letterSpacing: 8, fontWeight: 900 }}>LEVEL {currentLevelIdx + 1} CLEAR!</h2>
+          <div className="glass" style={{ border: '4px solid var(--accent-cyan)', borderRadius: 40, padding: '30px 100px', animation: 'banner-pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards' }}>
+            <h2 style={{ color: 'var(--accent-cyan)', fontSize: 60, margin: 0, letterSpacing: 8, fontWeight: 900, textShadow: '0 0 20px var(--accent-cyan)' }}>LEVEL {currentLevelIdx + 1} CLEAR!</h2>
             <p style={{ color: '#fff', textAlign: 'center', fontSize: 20, margin: '10px 0 0 0', fontWeight: 600 }}>{QUESTION.theme} MASTERED!</p>
           </div>
         </div>
@@ -354,37 +359,38 @@ export default function GameContainer() {
 
       {/* HUD ── TOP */}
       <div style={{ position: 'absolute', top: 15, left: 15, right: 15, display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 1000, gap: 15 }}>
-        <div style={{ background: '#000', borderRadius: 12, padding: '12px 28px', border: '2px solid #f59e0b', color: '#f59e0b', fontWeight: 900, fontSize: 18 }}>LEVEL {currentLevelIdx + 1}</div>
+        <div className="glass" style={{ borderRadius: 16, padding: '12px 28px', color: '#fff', fontWeight: 900, fontSize: 18, border: '1px solid var(--accent-cyan)' }}>LEVEL {currentLevelIdx + 1}</div>
         <div style={{ flex: 1 }}><ProgressBar sorted={Object.keys(sortedWords).length} total={QUESTION.words.length} score={score} incorrect={incorrect} /></div>
-        <button onClick={() => setIsPaused(!isPaused)} style={{ background: isPaused ? '#10b981' : '#111', border: '2px solid #f59e0b', borderRadius: 12, color: '#f59e0b', padding: '10px 24px', fontWeight: 900, cursor: 'pointer' }}>{isPaused ? '▶ RESUME' : '⏸ PAUSE'}</button>
+        <button className="btn-premium" onClick={() => setIsPaused(!isPaused)} style={{ padding: '12px 28px', fontSize: 14 }}>{isPaused ? '▶ RESUME' : '⏸ PAUSE'}</button>
       </div>
 
       {/* HUD ── BOTTOM Left (MUTE TOGGLE) */}
       <div style={{ position: 'absolute', bottom: 20, left: 20, zIndex: 1000 }}>
         <button 
           onClick={() => setIsMuted(!isMuted)} 
+          className="glass"
           style={{ 
-            background: 'rgba(0,0,0,0.85)', border: '2px solid #f59e0b', borderRadius: '50%', 
-            width: 60, height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 28, cursor: 'pointer', color: '#f59e0b',
-            boxShadow: '0 8px 30px rgba(0,0,0,0.6)',
-            transition: 'transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+            borderRadius: '50%', 
+            width: 65, height: 65, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 28, cursor: 'pointer', color: 'var(--accent-cyan)',
+            transition: 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+            border: '2px solid var(--accent-cyan)',
           }}
-          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.15)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.boxShadow = '0 0 25px var(--accent-cyan)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'var(--glow-cyan)'; }}
         >
           {isMuted ? '🔇' : '🔊'}
         </button>
       </div>
 
       <div style={{ position: 'absolute', top: 95, left: 0, right: 0, textAlign: 'center', zIndex: 100 }}>
-        <div style={{ 
+        <div className="glass" style={{ 
           display: 'inline-flex', justifyContent: 'center',
-          background: '#000', borderRadius: 12, padding: '12px 25px', 
-          border: '1px solid rgba(255,158,11,0.5)', color: '#fff', 
-          fontSize: 14, fontWeight: 600, fontStyle: 'italic',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.8)',
-          maxWidth: '500px', lineHeight: '1.4', textAlign: 'center'
+          borderRadius: 16, padding: '14px 28px', 
+          color: '#fff', 
+          fontSize: 15, fontWeight: 600,
+          maxWidth: '600px', lineHeight: '1.5', textAlign: 'center',
+          border: '1px solid rgba(255,255,255,0.1)',
         }}>
           {QUESTION.question_text}
         </div>
