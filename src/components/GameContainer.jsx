@@ -233,6 +233,7 @@ export default function GameContainer() {
           setSortedWords(p => ({ ...p, [word.id]: droppedCatId })); setScore(s => s + 1); setGlowingBin(droppedCatId)
           setFlashType('correct'); setRobotFeedback(`Great job! "${word.text}" means ${hint}`)
           setTimeout(() => setFlashType(null), 1000)
+          setTimeout(() => setGlowingBin(null), 2000)
           setParticles(p => [...p, { id: Date.now(), x: e.clientX, y: e.clientY, color: CATEGORIES.find(c => c.id === droppedCatId).color }])
         } else {
           if (!isMuted) sounds.wrong()
