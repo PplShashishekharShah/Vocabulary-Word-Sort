@@ -58,12 +58,12 @@ export default function WordTile({
         <span style={{
           fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
           fontWeight: 900,
-          fontSize: word.text.length > 9 ? 12 : 15,
-          color: '#1e293b',
-          letterSpacing: 1,
+          fontSize: word.text.length > 9 ? 14 : 18,
+          color: '#0f172a', // Darker for better contrast
+          letterSpacing: 1.5,
           textTransform: 'uppercase',
           pointerEvents: 'none',
-          textShadow: '0 1px 0 rgba(255,255,255,0.8)',
+          textShadow: '0 2px 4px rgba(255,255,255,0.4), 0 0 2px rgba(255,255,255,0.8)',
         }}>
           {word.text}
         </span>

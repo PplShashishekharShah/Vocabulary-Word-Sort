@@ -1,6 +1,6 @@
 // ─── GameContainer Component ───────────────────────────────────────────────────
-// Added Mute Toggle and Enhanced Feedback.
-// Integrated Voice Synthesis and Fun Visual FX.
+// Final high-fidelity educational word sorting game.
+// Integrated Voice, Dynamic Feedback, and Multi-Level Progression.
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 
@@ -15,10 +15,6 @@ import ProgressBar      from './ProgressBar'
 import EffectsLayer     from './EffectsLayer'
 import CompletionScreen from './CompletionScreen'
 import RobotGuide       from './RobotGuide'
-
-const QUESTION   = questionsData.questions[0]
-const CATEGORIES = QUESTION.categories
-const ANSWERS    = QUESTION.correct_answer
 
 // SYNC: Code-driven move exactly matching CSS 2.2s/200px (L-to-R)
 const BELT_SPEED = 1.5151515
@@ -68,7 +64,14 @@ function DragGhost({ dragging }) {
 }
 
 export default function GameContainer() {
-  const INITIAL_QUEUE = useMemo(() => [...QUESTION.words].sort(() => Math.random() - 0.5), [])
+  const [currentLevelIdx, setCurrentLevelIdx] = useState(0)
+  
+  // Dynamic extraction of question data
+  const QUESTION   = questionsData.questions[currentLevelIdx]
+  const CATEGORIES = QUESTION.categories
+  const ANSWERS    = QUESTION.correct_answer
+
+  const INITIAL_QUEUE = useMemo(() => [...QUESTION.words].sort(() => Math.random() - 0.5), [currentLevelIdx])
 
   const [sortedWords, setSortedWords] = useState({})
   const [wrongWords,  setWrongWords]  = useState(new Set())
@@ -96,18 +99,32 @@ export default function GameContainer() {
 
   useEffect(() => { isPausedRef.current = isPaused }, [isPaused])
 
-  // Initial Question Voice
+  // Reset states on level change
   useEffect(() => {
-    if (isMuted) return
-    const t = setTimeout(() => {
-      speak(QUESTION.question_text)
-    }, 1000)
-    return () => clearTimeout(t)
-  }, [isMuted])
+    setSortedWords({})
+    setWrongWords(new Set())
+    setGlowingBin(null)
+    setShakingBin(null)
+    setParticles([])
+    setIsCelebrating(false)
+    setRobotFeedback(`Level ${currentLevelIdx + 1}: ${QUESTION.theme}! 🏭`)
+    setSpawnQueue(INITIAL_QUEUE.map(w => w.id))
+    setRetryQueue([])
+    setBeltWords([])
+    setWordPositions({})
+    
+    // Initial Question Voice on Level Start
+    if (!isMuted) {
+      const t = setTimeout(() => {
+        speak(QUESTION.question_text)
+      }, 1000)
+      return () => clearTimeout(t)
+    }
+  }, [currentLevelIdx, isMuted])
 
-  // Robot Voice Feedback
+  // Robot Voice Feedback (Correct/Wrong/Hints)
   useEffect(() => {
-    if (robotFeedback && !isMuted) {
+    if (robotFeedback && !isMuted && !robotFeedback.includes("Level")) {
       speak(robotFeedback)
     }
   }, [robotFeedback, isMuted])
@@ -191,22 +208,23 @@ export default function GameContainer() {
       })
 
       if (droppedCatId) {
+        const hint = QUESTION.hints[word.id] || "keep trying!"
         if (ANSWERS[word.id] === droppedCatId) {
           if (!isMuted) sounds.correct()
           setSortedWords(p => ({ ...p, [word.id]: droppedCatId })); setScore(s => s + 1); setGlowingBin(droppedCatId)
-          setFlashType('correct'); setRobotFeedback("Great job! That's correct! 🔧")
+          setFlashType('correct'); setRobotFeedback(`Great job! "${word.text}" means ${hint}`)
           setTimeout(() => setFlashType(null), 1000)
           setParticles(p => [...p, { id: Date.now(), x: e.clientX, y: e.clientY, color: CATEGORIES.find(c => c.id === droppedCatId).color }])
         } else {
           if (!isMuted) sounds.wrong()
           setIncorrect(i => i + 1); setWrongWords(p => new Set([...p, word.id])); setShakingBin(droppedCatId)
-          setFlashType('wrong'); setRobotFeedback("Oops! Wrong bin! Try again! 🔧")
+          setFlashType('wrong'); setRobotFeedback(`Oops! "${word.text}" means ${hint}. Try another bin!`)
           setTimeout(() => { 
             setFlashType(null)
             setRetryQueue(q => q.includes(word.id) ? q : [...q, word.id])
             setWordPositions(p => { const next = {...p}; delete next[word.id]; return next })
             setBeltWords(bw => bw.filter(bid => bid !== word.id))
-          }, 1000)
+          }, 1500)
           setTimeout(() => { setWrongWords(p => { const n = new Set(p); n.delete(word.id); return n }); setShakingBin(null) }, 600)
         }
       }
@@ -214,24 +232,42 @@ export default function GameContainer() {
     }
     window.addEventListener('mousemove', onMove); window.addEventListener('mouseup', onUp)
     return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
-  }, [dragging, CATEGORIES, isMuted])
+  }, [dragging, CATEGORIES, isMuted, currentLevelIdx])
 
   useEffect(() => {
     if (Object.keys(sortedWords).length === QUESTION.words.length && QUESTION.words.length > 0) {
       setIsCelebrating(true); 
-      setRobotFeedback("MISSION COMPLETE! You're a pro! 🏆")
+      
+      const isFinalLevel = currentLevelIdx === questionsData.questions.length - 1
+      setRobotFeedback(isFinalLevel ? "MISSION COMPLETE! All levels finished! You're a word master! 🏅" : "LEVEL COMPLETE! Moving to the next challenge... 🏆")
+      
       const colors = ['#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#a855f7']
       const int = setInterval(() => { setParticles(p => [...p, { id: Math.random(), x: Math.random() * window.innerWidth, y: Math.random() * (window.innerHeight / 2), color: colors[Math.floor(Math.random() * colors.length)], count: 25 }]) }, 400)
-      setTimeout(() => { clearInterval(int); setGameOver(true) }, 4000)
+      
+      setTimeout(() => { 
+        clearInterval(int); 
+        if (!isFinalLevel) {
+          setCurrentLevelIdx(prev => prev + 1)
+        } else {
+          setGameOver(true) 
+        }
+      }, 4000)
     }
   }, [sortedWords])
 
   const restart = () => { 
+    setCurrentLevelIdx(0)
     setSortedWords({}); setWrongWords(new Set()); setGlowingBin(null); setShakingBin(null); setParticles([]); setScore(0); setIncorrect(0)
     setGameOver(false); setIsPaused(false); setIsCelebrating(false); setRobotFeedback("Welcome back! Let's sort! 🏭")
     setSpawnQueue(INITIAL_QUEUE.map(w => w.id)); setRetryQueue([]); setBeltWords([]); setWordPositions({})
-    if (!isMuted) speak("Level Restarted! Let's get to work!")
+    if (!isMuted) speak("Game restarted! Let's go!")
   }
+
+  // Calculate bin counts robustly
+  const binCounts = Object.values(sortedWords).reduce((acc, catId) => {
+    acc[catId] = (acc[catId] || 0) + 1
+    return acc
+  }, {})
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100vh', overflow: 'hidden', cursor: dragging ? 'grabbing' : 'default', userSelect: 'none', animation: flashType === 'wrong' ? 'container-vibrate 0.4s ease' : 'none' }}>
@@ -269,21 +305,21 @@ export default function GameContainer() {
       {isCelebrating && (
         <div style={{ position: 'absolute', top: '35%', left: 0, right: 0, display: 'flex', justifyContent: 'center', zIndex: 6000, pointerEvents: 'none' }}>
           <div style={{ background: 'rgba(0,0,0,0.92)', border: '6px solid #f59e0b', borderRadius: 40, padding: '30px 100px', animation: 'banner-pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards' }}>
-            <h2 style={{ color: '#f59e0b', fontSize: 60, margin: 0, letterSpacing: 8, fontWeight: 900 }}>STAGE CLEAR!</h2>
-            <p style={{ color: '#fff', textAlign: 'center', fontSize: 20, margin: '10px 0 0 0', fontWeight: 600 }}>EXCELLENT SORTING!</p>
+            <h2 style={{ color: '#f59e0b', fontSize: 60, margin: 0, letterSpacing: 8, fontWeight: 900 }}>LEVEL {currentLevelIdx + 1} CLEAR!</h2>
+            <p style={{ color: '#fff', textAlign: 'center', fontSize: 20, margin: '10px 0 0 0', fontWeight: 600 }}>{QUESTION.theme} MASTERED!</p>
           </div>
         </div>
       )}
 
       {/* HUD ── TOP */}
       <div style={{ position: 'absolute', top: 15, left: 15, right: 15, display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 1000, gap: 15 }}>
-        <div style={{ background: '#000', borderRadius: 12, padding: '12px 28px', border: '2px solid #f59e0b', color: '#f59e0b', fontWeight: 900, fontSize: 18 }}>🏭 WORD FACTORY</div>
+        <div style={{ background: '#000', borderRadius: 12, padding: '12px 28px', border: '2px solid #f59e0b', color: '#f59e0b', fontWeight: 900, fontSize: 18 }}>LEVEL {currentLevelIdx + 1}</div>
         <div style={{ flex: 1 }}><ProgressBar sorted={Object.keys(sortedWords).length} total={QUESTION.words.length} score={score} incorrect={incorrect} /></div>
         <button onClick={() => setIsPaused(!isPaused)} style={{ background: isPaused ? '#10b981' : '#111', border: '2px solid #f59e0b', borderRadius: 12, color: '#f59e0b', padding: '10px 24px', fontWeight: 900, cursor: 'pointer' }}>{isPaused ? '▶ RESUME' : '⏸ PAUSE'}</button>
       </div>
 
-      {/* HUD ── BOTTOM LEFT (MUTE TOGGLE) */}
-      <div style={{ position: 'absolute', bottom: 20, left: 20, zIndex: 1000 }}>
+      {/* HUD ── BOTTOM RIGHT (MUTE TOGGLE) */}
+      <div style={{ position: 'absolute', bottom: 20, right: 20, zIndex: 1000 }}>
         <button 
           onClick={() => setIsMuted(!isMuted)} 
           style={{ 
@@ -317,7 +353,7 @@ export default function GameContainer() {
         <ConveyorBelt beltWords={beltWords} allWords={QUESTION.words} wordPositions={wordPositions} sortedWords={sortedWords} wrongWords={wrongWords} dragging={dragging} onDragStart={handleDragStart} isPaused={isPaused} />
       </div>
 
-      <CategoryBins categories={CATEGORIES} binCounts={Object.values(sortedWords).reduce((acc, catId) => ({...acc, [catId]: (acc[catId] || 0) + 1}), {})} glowingBin={glowingBin} shakingBin={shakingBin} dragging={dragging} binsRef={binsRef} />
+      <CategoryBins categories={CATEGORIES} binCounts={binCounts} glowingBin={glowingBin} shakingBin={shakingBin} dragging={dragging} binsRef={binsRef} />
       
       <div style={{ zIndex: 10000, position: 'absolute', right: -30, top: '45%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
         <RobotGuide isPaused={isPaused} externalMessage={robotFeedback} />
@@ -326,6 +362,15 @@ export default function GameContainer() {
       <DragGhost dragging={dragging} />
       {particles.map(p => <ParticleBurst key={p.id} x={p.x} y={p.y} color={p.color} count={p.count} onDone={() => setParticles(pr => pr.filter(x => x.id !== p.id))} />)}
       
+      {gameOver && (
+        <CompletionScreen 
+          score={score} 
+          incorrect={incorrect} 
+          total={questionsData.questions.reduce((sum, q) => sum + q.words.length, 0)} 
+          onRestart={restart} 
+        />
+      )}
+
       <style>{`
         @keyframes container-vibrate { 0%, 100% { transform: translate(0,0); } 10%, 30%, 50%, 70%, 90% { transform: translate(-4px, 0); } 20%, 40%, 60%, 80% { transform: translate(4px, 0); } }
         @keyframes flash-pulse { from { opacity: 0; } 30% { opacity: 1; } to { opacity: 0; } }

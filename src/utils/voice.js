@@ -20,15 +20,31 @@ export const speak = (text, cancelCurrent = true) => {
   const utterance = new SpeechSynthesisUtterance(cleanText)
   utterance.rate = 1.0
   utterance.pitch = 1.0
-  
-  // Optional: Select a specific voice if available (e.g. Google US English)
-  const voices = window.speechSynthesis.getVoices()
-  const preferredVoice = voices.find(v => v.lang.includes('en-US')) || voices[0]
-  if (preferredVoice) {
-    utterance.voice = preferredVoice
+
+  const doSpeak = () => {
+    const voices = window.speechSynthesis.getVoices()
+    // Prioritize natural sounding English voices
+    const preferredVoice = 
+      voices.find(v => v.name.includes('Google US English')) ||
+      voices.find(v => v.lang.includes('en-US')) ||
+      voices.find(v => v.lang.includes('en-GB')) ||
+      voices[0]
+
+    if (preferredVoice) {
+      utterance.voice = preferredVoice
+    }
+    window.speechSynthesis.speak(utterance)
   }
 
-  window.speechSynthesis.speak(utterance)
+  // If voices aren't loaded yet, wait for them
+  if (window.speechSynthesis.getVoices().length === 0) {
+    window.speechSynthesis.onvoiceschanged = () => {
+      doSpeak()
+      window.speechSynthesis.onvoiceschanged = null // prevent multiple triggers
+    }
+  } else {
+    doSpeak()
+  }
 }
 
 export const stopSpeech = () => {

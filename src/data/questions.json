@@ -1,7 +1,10 @@
 {
   "questions": [
     {
+      "level": 1,
+      "theme": "Emotion Sorting",
       "question_text": "Sort the following words into categories based on the type of emotion they describe.",
+      
       "words": [
         { "id": "word_1",  "text": "joyful" },
         { "id": "word_2",  "text": "gloomy" },
@@ -16,25 +19,180 @@
         { "id": "word_11", "text": "disappointed" },
         { "id": "word_12", "text": "frustrated" }
       ],
+
       "categories": [
-        { "id": "cat_1", "label": "Positive Feelings",             "color": "#f59e0b", "glow": "rgba(245,158,11,0.6)",  "emoji": "" },
-        { "id": "cat_2", "label": "Sad or Disappointed Feelings",  "color": "#3b82f6", "glow": "rgba(59,130,246,0.6)", "emoji": "" },
-        { "id": "cat_3", "label": "Angry or Frustrated Feelings",  "color": "#ef4444", "glow": "rgba(239,68,68,0.6)",  "emoji": "" }
+        { "id": "cat_1", "label": "Positive Feelings", "color": "#f59e0b", "emoji": "😊" },
+        { "id": "cat_2", "label": "Sad Feelings", "color": "#3b82f6", "emoji": "😢" },
+        { "id": "cat_3", "label": "Angry Feelings", "color": "#ef4444", "emoji": "😡" }
       ],
+
+      "hints": {
+        "word_1": "feeling very happy",
+        "word_2": "feeling sad and without hope",
+        "word_3": "extremely angry",
+        "word_4": "noticeably happy and positive",
+        "word_5": "feeling deep sadness",
+        "word_6": "slightly angry or annoyed",
+        "word_7": "very pleased and happy",
+        "word_8": "not happy",
+        "word_9": "feeling bothered or slightly angry",
+        "word_10": "feeling happy or satisfied",
+        "word_11": "feeling let down",
+        "word_12": "feeling upset due to failure"
+      },
+
       "correct_answer": {
-        "word_1":  "cat_1",
-        "word_2":  "cat_2",
-        "word_3":  "cat_3",
-        "word_4":  "cat_1",
-        "word_5":  "cat_2",
-        "word_6":  "cat_3",
-        "word_7":  "cat_1",
-        "word_8":  "cat_2",
-        "word_9":  "cat_3",
-        "word_10": "cat_1",
-        "word_11": "cat_2",
-        "word_12": "cat_3"
+        "word_1": "cat_1","word_2": "cat_2","word_3": "cat_3",
+        "word_4": "cat_1","word_5": "cat_2","word_6": "cat_3",
+        "word_7": "cat_1","word_8": "cat_2","word_9": "cat_3",
+        "word_10": "cat_1","word_11": "cat_2","word_12": "cat_3"
       }
-    }
+    },
+
+    {
+      "level": 2,
+      "theme": "Action Factory",
+      "question_text": "Sort the words based on whether they describe building, breaking, or fixing actions.",
+
+      "words": [
+        { "id": "word_1", "text": "construct" },
+        { "id": "word_2", "text": "shatter" },
+        { "id": "word_3", "text": "repair" },
+        { "id": "word_4", "text": "assemble" },
+        { "id": "word_5", "text": "destroy" },
+        { "id": "word_6", "text": "mend" },
+        { "id": "word_7", "text": "design" },
+        { "id": "word_8", "text": "ruin" },
+        { "id": "word_9", "text": "restore" },
+        { "id": "word_10", "text": "form" },
+        { "id": "word_11", "text": "crack" },
+        { "id": "word_12", "text": "improve" }
+      ],
+
+      "categories": [
+        { "id": "cat_1", "label": "Build/Create", "color": "#10b981", "emoji": "🏗️" },
+        { "id": "cat_2", "label": "Break/Damage", "color": "#ef4444", "emoji": "💥" },
+        { "id": "cat_3", "label": "Fix/Improve", "color": "#3b82f6", "emoji": "🛠️" }
+      ],
+
+      "hints": {
+        "word_1": "to build something",
+        "word_2": "to break into pieces",
+        "word_3": "to fix something damaged",
+        "word_4": "to put parts together",
+        "word_5": "to completely damage",
+        "word_6": "to repair something small",
+        "word_7": "to plan and create",
+        "word_8": "to destroy or spoil",
+        "word_9": "to bring back to original condition",
+        "word_10": "to create shape or structure",
+        "word_11": "to break slightly",
+        "word_12": "to make better"
+      },
+
+      "correct_answer": {
+        "word_1": "cat_1","word_2": "cat_2","word_3": "cat_3",
+        "word_4": "cat_1","word_5": "cat_2","word_6": "cat_3",
+        "word_7": "cat_1","word_8": "cat_2","word_9": "cat_3",
+        "word_10": "cat_1","word_11": "cat_2","word_12": "cat_3"
+      }
+    },
+    
+{
+  "level": 3,
+  "theme": "Movement Sorting Zone",
+  "question_text": "Sort the words based on the type of movement they describe.",
+
+  "words": [
+    { "id": "word_1", "text": "dash" },
+    { "id": "word_2", "text": "stroll" },
+    { "id": "word_3", "text": "wobble" },
+    { "id": "word_4", "text": "sprint" },
+    { "id": "word_5", "text": "creep" },
+    { "id": "word_6", "text": "stumble" },
+    { "id": "word_7", "text": "rush" },
+    { "id": "word_8", "text": "glide" },
+    { "id": "word_9", "text": "wiggle" },
+    { "id": "word_10", "text": "zoom" },
+    { "id": "word_11", "text": "wander" },
+    { "id": "word_12", "text": "bounce" }
+  ],
+
+  "categories": [
+    { "id": "cat_1", "label": "Fast Movement", "color": "#22c55e", "emoji": "⚡" },
+    { "id": "cat_2", "label": "Slow Movement", "color": "#3b82f6", "emoji": "🐢" },
+    { "id": "cat_3", "label": "Unsteady Movement", "color": "#eab308", "emoji": "🌀" }
+  ],
+
+  "hints": {
+    "word_1": "to run very quickly",
+    "word_2": "to walk slowly and relaxed",
+    "word_3": "to move shakily side to side",
+    "word_4": "to run very fast for a short time",
+    "word_5": "to move slowly and quietly",
+    "word_6": "to trip or lose balance while walking",
+    "word_7": "to move quickly because of urgency",
+    "word_8": "to move smoothly and easily",
+    "word_9": "to move with small shaky movements",
+    "word_10": "to move very fast (like a car or plane)",
+    "word_11": "to walk slowly without a fixed direction",
+    "word_12": "to move up and down repeatedly"
+  },
+
+  "correct_answer": {
+    "word_1": "cat_1","word_2": "cat_2","word_3": "cat_3",
+    "word_4": "cat_1","word_5": "cat_2","word_6": "cat_3",
+    "word_7": "cat_1","word_8": "cat_2","word_9": "cat_3",
+    "word_10": "cat_1","word_11": "cat_2","word_12": "cat_3"
+  }
+},
+{
+  "level": 4,
+  "theme": "Word Relationships Lab",
+  "question_text": "Sort the words into Synonyms, Antonyms, or Homophones.",
+
+  "words": [
+    { "id": "word_1", "text": "happy" },
+    { "id": "word_2", "text": "sad" },
+    { "id": "word_3", "text": "hear" },
+    { "id": "word_4", "text": "joyful" },
+    { "id": "word_5", "text": "loud" },
+    { "id": "word_6", "text": "here" },
+    { "id": "word_7", "text": "glad" },
+    { "id": "word_8", "text": "quiet" },
+    { "id": "word_9", "text": "know" },
+    { "id": "word_10", "text": "cheerful" },
+    { "id": "word_11", "text": "fast" },
+    { "id": "word_12", "text": "no" }
+  ],
+
+  "categories": [
+    { "id": "cat_1", "label": "Synonyms", "color": "#8b5cf6", "emoji": "🔁" },
+    { "id": "cat_2", "label": "Antonyms", "color": "#f97316", "emoji": "⚖️" },
+    { "id": "cat_3", "label": "Homophones", "color": "#06b6d4", "emoji": "🔊" }
+  ],
+
+  "hints": {
+    "word_1": "means feeling happy or pleased",
+    "word_2": "means feeling unhappy",
+    "word_3": "to listen with your ears",
+    "word_4": "means very happy",
+    "word_5": "makes a lot of sound",
+    "word_6": "refers to a place (this location)",
+    "word_7": "means happy or satisfied",
+    "word_8": "makes very little sound",
+    "word_9": "to have information in your mind",
+    "word_10": "means happy and bright",
+    "word_11": "moving quickly",
+    "word_12": "a word used to say 'not yes'"
+  },
+
+  "correct_answer": {
+    "word_1": "cat_1","word_2": "cat_2","word_3": "cat_3",
+    "word_4": "cat_1","word_5": "cat_2","word_6": "cat_3",
+    "word_7": "cat_1","word_8": "cat_2","word_9": "cat_3",
+    "word_10": "cat_1","word_11": "cat_2","word_12": "cat_3"
+  }
+}
   ]
 }
